@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { auth, db, googleProvider } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import logo from '../logo.png';
 
 export default function LoginScreen() {
   const { setCurrentScreen, setCurrentUser, login } = useApp();
@@ -203,11 +204,12 @@ export default function LoginScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <div style={{
             width: 44, height: 44,
-            background: 'rgba(255,255,255,0.2)',
             borderRadius: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 22,
-          }}>🏙️</div>
+            overflow: 'hidden',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          }}>
+            <img src={logo} alt="CityFind" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: 'white' }}>CityFind</span>
         </div>
         <h1 style={{

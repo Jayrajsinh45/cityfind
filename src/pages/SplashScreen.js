@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import logo from '../logo.png';
 
 export default function SplashScreen() {
   const { setCurrentScreen, loadingConfig, currentUser } = useApp();
@@ -36,17 +37,17 @@ export default function SplashScreen() {
       gap: 20,
     }}>
       {/* Logo */}
-      <div style={{ animation: 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1)' }}>
+        <div style={{ animation: 'splashPop 0.6s cubic-bezier(0.34,1.56,0.64,1)' }}>
         <div style={{
-          width: 90, height: 90,
-          background: 'rgba(255,255,255,0.15)',
-          borderRadius: 28,
+          width: 110, height: 110,
+          borderRadius: 32,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(10px)',
-          border: '2px solid rgba(255,255,255,0.3)',
+          overflow: 'hidden',
+          boxShadow: '0 8px 40px rgba(255,107,44,0.5)',
+          border: '3px solid rgba(255,255,255,0.3)',
           marginBottom: 8,
         }}>
-          <span style={{ fontSize: 44 }}>🏙️</span>
+          <img src={logo} alt="CityFind Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
       </div>
 
