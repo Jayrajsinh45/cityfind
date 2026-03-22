@@ -1,13 +1,14 @@
 {
   "files": {
     "main.css": "/cityfind/static/css/main.5b806279.css",
-    "main.js": "/cityfind/static/js/main.f5866720.js",
+    "main.js": "/cityfind/static/js/main.cf83025a.js",
+    "static/media/logo.png": "/cityfind/static/media/logo.93efc7ae404c3c93136a.png",
     "index.html": "/cityfind/index.html",
     "main.5b806279.css.map": "/cityfind/static/css/main.5b806279.css.map",
-    "main.f5866720.js.map": "/cityfind/static/js/main.f5866720.js.map"
+    "main.cf83025a.js.map": "/cityfind/static/js/main.cf83025a.js.map"
   },
   "entrypoints": [
     "static/css/main.5b806279.css",
-    "static/js/main.f5866720.js"
+    "static/js/main.cf83025a.js"
   ]
 }
