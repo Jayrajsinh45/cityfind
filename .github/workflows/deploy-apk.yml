@@ -27,6 +27,8 @@ jobs:
 
     - name: Build web application
       run: npm run build
+      env:
+        CI: false
       
     - name: Deploy Web App to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
