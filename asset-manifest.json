@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/cityfind/static/css/main.5b806279.css",
+    "main.js": "/cityfind/static/js/main.f5866720.js",
+    "index.html": "/cityfind/index.html",
+    "main.5b806279.css.map": "/cityfind/static/css/main.5b806279.css.map",
+    "main.f5866720.js.map": "/cityfind/static/js/main.f5866720.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5b806279.css",
+    "static/js/main.f5866720.js"
+  ]
+}
