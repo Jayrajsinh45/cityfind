@@ -13,6 +13,13 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const withTimeout = (promise, ms = 15000) => {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out. Please check your internet or Firebase console whitelist (localhost).')), ms))
+    ]);
+  };
+
   const handleLogin = async () => {
     if (!form.email || !form.password) { setError('Please fill all fields'); return; }
     
@@ -26,7 +33,7 @@ export default function LoginScreen() {
     setError('');
     
     try {
-      const userCred = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const userCred = await withTimeout(signInWithEmailAndPassword(auth, form.email, form.password));
       const user = userCred.user;
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists()) {
@@ -38,7 +45,8 @@ export default function LoginScreen() {
         setCurrentScreen('customerHome');
       }
     } catch (err) {
-      setError("Login failed: " + err.message);
+      console.error(err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -56,7 +64,7 @@ export default function LoginScreen() {
     setLoading(true);
     setError('');
     try {
-      const userCred = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const userCred = await withTimeout(createUserWithEmailAndPassword(auth, form.email, form.password));
       const user = userCred.user;
       
       const userData = {
@@ -72,7 +80,8 @@ export default function LoginScreen() {
       if (selectedRole === 'owner') setCurrentScreen('ownerDashboard');
       else setCurrentScreen('customerHome');
     } catch(err) {
-      setError("Signup failed: " + err.message);
+      console.error(err);
+      setError(err.message);
       setMode('signup');
     } finally {
       setLoading(false);
@@ -81,7 +90,6 @@ export default function LoginScreen() {
 
   const handleGoogle = async () => {
     if (mode === 'signup' && !selectedRole) {
-      // Must select role first if signing up
       setMode('role');
       return;
     }
@@ -89,7 +97,8 @@ export default function LoginScreen() {
     setLoading(true);
     setError('');
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      // NOTE: Popups often fail in APKs unless 'capacitor://localhost' is whitelisted in Firebase
+      const result = await withTimeout(signInWithPopup(auth, googleProvider), 20000);
       const user = result.user;
       const userRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userRef);
@@ -113,7 +122,8 @@ export default function LoginScreen() {
         else setCurrentScreen('customerHome');
       }
     } catch (err) {
-      setError("Google Sign-In failed: " + err.message);
+      console.error(err);
+      setError("Google Login Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -269,11 +279,11 @@ export default function LoginScreen() {
             onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
           />
 
-          {error && <p style={{ color: '#e53e3e', fontSize: 13 }}>{error}</p>}
+          {error && <p style={{ color: '#e53e3e', fontSize: 13, textAlign: 'center' }}>{error}</p>}
 
           {mode === 'login' && (
-            <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
-              Test Demo without Firebase: owner@demo.com
+            <p style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
+              Note: If login hangs, ensure 'capacitor://localhost' and 'localhost' are added to Firebase Authorized Domains.
             </p>
           )}
 
@@ -283,7 +293,7 @@ export default function LoginScreen() {
             disabled={loading}
             style={{ opacity: loading ? 0.7 : 1 }}
           >
-            {loading ? 'Loading...' : (mode === 'login' ? 'Login' : 'Continue')}
+            {loading ? 'Processing...' : (mode === 'login' ? 'Login' : 'Continue')}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
