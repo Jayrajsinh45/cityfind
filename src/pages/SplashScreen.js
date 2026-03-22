@@ -6,14 +6,24 @@ export default function SplashScreen() {
   const { setCurrentScreen, loadingConfig, currentUser } = useApp();
 
   useEffect(() => {
-    // Wait at least 2 seconds for aesthetic splash screen,
-    // plus wait until loadingConfig from Firebase Auth resolves.
     const startTime = Date.now();
-    
+
+    // Hard failsafe: never wait more than 5 seconds total — navigate regardless
+    const hardTimeout = setTimeout(() => {
+      if (currentUser) {
+        if (currentUser.role === 'owner') setCurrentScreen('ownerDashboard');
+        else setCurrentScreen('customerHome');
+      } else {
+        setCurrentScreen('login');
+      }
+    }, 5000);
+
+    // If Firebase resolves faster, navigate as soon as both are ready
     const checkState = setInterval(() => {
       const elapsed = Date.now() - startTime;
-      if (elapsed >= 2500 && !loadingConfig) {
+      if (elapsed >= 2000 && !loadingConfig) {
         clearInterval(checkState);
+        clearTimeout(hardTimeout);
         if (currentUser) {
           if (currentUser.role === 'owner') setCurrentScreen('ownerDashboard');
           else setCurrentScreen('customerHome');
@@ -23,7 +33,10 @@ export default function SplashScreen() {
       }
     }, 100);
 
-    return () => clearInterval(checkState);
+    return () => {
+      clearInterval(checkState);
+      clearTimeout(hardTimeout);
+    };
   }, [loadingConfig, currentUser, setCurrentScreen]);
 
   return (

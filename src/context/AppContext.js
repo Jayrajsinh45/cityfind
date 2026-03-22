@@ -14,25 +14,41 @@ export function AppProvider({ children }) {
   const [loadingConfig, setLoadingConfig] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const docRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const userData = { id: user.uid, email: user.email, ...docSnap.data() };
-          setCurrentUser(userData);
-          if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
-          else setCurrentScreen('customerHome');
-        } else {
-          const defaultUser = { id: user.uid, email: user.email, name: user.displayName, role: 'customer' };
-          setCurrentUser(defaultUser);
-          setCurrentScreen('customerHome');
+    let unsub = () => {};
+    try {
+      unsub = onAuthStateChanged(auth, async (user) => {
+        try {
+          if (user) {
+            const docRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const userData = { id: user.uid, email: user.email, ...docSnap.data() };
+              setCurrentUser(userData);
+              if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
+              else setCurrentScreen('customerHome');
+            } else {
+              const defaultUser = { id: user.uid, email: user.email, name: user.displayName, role: 'customer' };
+              setCurrentUser(defaultUser);
+              setCurrentScreen('customerHome');
+            }
+          } else {
+            setCurrentUser(null);
+          }
+        } catch (err) {
+          console.warn('Firebase user fetch error:', err);
+          setCurrentUser(null);
+        } finally {
+          setLoadingConfig(false);
         }
-      } else {
-        setCurrentUser(null);
-      }
+      }, (error) => {
+        // Auth state listener error (e.g. network issues in APK WebView)
+        console.warn('onAuthStateChanged error:', error);
+        setLoadingConfig(false);
+      });
+    } catch (err) {
+      console.warn('Firebase auth init error:', err);
       setLoadingConfig(false);
-    });
+    }
     return unsub;
   }, []);
 
