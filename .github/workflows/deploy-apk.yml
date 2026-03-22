@@ -78,13 +78,6 @@ jobs:
         npx cap add android
         npx cap sync android
 
-    - name: Add internet permission to AndroidManifest
-      run: |
-        sed -i 's|<uses-permission android:name="android.permission.INTERNET" />||g' android/app/src/main/AndroidManifest.xml
-        sed -i 's|<manifest|<manifest xmlns:android="http://schemas.android.com/apk/res/android"|g' android/app/src/main/AndroidManifest.xml || true
-        grep -q 'INTERNET' android/app/src/main/AndroidManifest.xml || \
-          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET" />\n    <application|g' android/app/src/main/AndroidManifest.xml
-
     - name: Print build config (debug)
       run: |
         echo "=== Gradle wrapper ==="
