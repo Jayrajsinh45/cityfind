@@ -63,10 +63,12 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Install Capacitor v5
-      run: npm install @capacitor/cli@5 @capacitor/core@5 @capacitor/android@5
+    - name: Install Capacitor v5 & Assets
+      run: |
+        npm install @capacitor/cli@5 @capacitor/core@5 @capacitor/android@5
+        npm install @capacitor/assets --save-dev
 
-    - name: Build React app with PUBLIC_URL=/ for APK (no /cityfind prefix)
+    - name: Build React app with PUBLIC_URL=/ for APK
       run: npm run build
       env:
         CI: false
@@ -78,6 +80,10 @@ jobs:
         npx cap add android
         npx cap sync android
 
+    - name: Generate Android Launch Icons and Splash Screens
+      run: |
+        npx @capacitor/assets generate --android
+
     - name: Print build config (debug)
       run: |
         echo "=== Gradle wrapper ==="
@@ -85,7 +91,7 @@ jobs:
         echo "=== build.gradle ==="
         cat android/build.gradle
         echo "=== index.html check ==="
-        head -5 build/index.html
+        head -10 build/index.html
 
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
@@ -95,12 +101,8 @@ jobs:
         cd android
         ./gradlew assembleDebug --no-daemon --stacktrace
 
-    - name: Find APK location
-      run: find android -name '*.apk' -type f 2>/dev/null || echo 'No APK found anywhere'
-
     - name: Upload Android APK
       uses: actions/upload-artifact@v4
       with:
         name: CityFind-Android-APK
         path: android/app/build/outputs/apk/debug/app-debug.apk
-        if-no-files-found: error
