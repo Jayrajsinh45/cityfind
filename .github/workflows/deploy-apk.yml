@@ -62,6 +62,7 @@ jobs:
     - name: Build Android APK
       run: |
         cd android
+        sed -i 's/gradle-8.2.1-all.zip/gradle-8.7-all.zip/g' gradle/wrapper/gradle-wrapper.properties
         ./gradlew assembleDebug --no-daemon --no-parallel --stacktrace
         
     - name: Upload Android APK
