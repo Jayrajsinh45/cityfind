@@ -2,12 +2,28 @@ import React, { useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 export default function SplashScreen() {
-  const { setCurrentScreen } = useApp();
+  const { setCurrentScreen, loadingConfig, currentUser } = useApp();
 
   useEffect(() => {
-    const t = setTimeout(() => setCurrentScreen('login'), 2500);
-    return () => clearTimeout(t);
-  }, [setCurrentScreen]);
+    // Wait at least 2 seconds for aesthetic splash screen,
+    // plus wait until loadingConfig from Firebase Auth resolves.
+    const startTime = Date.now();
+    
+    const checkState = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= 2500 && !loadingConfig) {
+        clearInterval(checkState);
+        if (currentUser) {
+          if (currentUser.role === 'owner') setCurrentScreen('ownerDashboard');
+          else setCurrentScreen('customerHome');
+        } else {
+          setCurrentScreen('login');
+        }
+      }
+    }, 100);
+
+    return () => clearInterval(checkState);
+  }, [loadingConfig, currentUser, setCurrentScreen]);
 
   return (
     <div style={{
@@ -64,6 +80,10 @@ export default function SplashScreen() {
         @keyframes splashPop {
           from { transform: scale(0.5) rotate(-10deg); opacity: 0; }
           to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes fadeUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
         @keyframes dotPulse {
           0%, 80%, 100% { transform: scale(1); opacity: 0.4; }

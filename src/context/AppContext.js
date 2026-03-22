@@ -1,163 +1,107 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, addDoc, updateDoc } from 'firebase/firestore';
 
 const AppContext = createContext();
-
-// Mock data for shops and products
-const MOCK_SHOPS = [
-  {
-    id: 1,
-    name: "Patel General Store",
-    category: "Grocery",
-    address: "12, Alkapuri, Vadodara",
-    phone: "9876543210",
-    hours: "7:00 AM - 10:00 PM",
-    rating: 4.5,
-    reviews: 128,
-    distance: "0.3 km",
-    image: null,
-    ownerId: "owner1",
-    products: [
-      { id: 101, name: "Basmati Rice (5kg)", price: 320, available: true, category: "Food" },
-      { id: 102, name: "Toor Dal (1kg)", price: 140, available: true, category: "Food" },
-      { id: 103, name: "Sunflower Oil (1L)", price: 160, available: true, category: "Food" },
-      { id: 104, name: "Sugar (1kg)", price: 45, available: true, category: "Food" },
-      { id: 105, name: "Wheat Flour (10kg)", price: 380, available: false, category: "Food" },
-    ]
-  },
-  {
-    id: 2,
-    name: "City Pharmacy",
-    category: "Pharmacy",
-    address: "45, Fatehgunj, Vadodara",
-    phone: "9812345678",
-    hours: "8:00 AM - 11:00 PM",
-    rating: 4.8,
-    reviews: 94,
-    distance: "0.7 km",
-    image: null,
-    ownerId: "owner2",
-    products: [
-      { id: 201, name: "Paracetamol 500mg", price: 22, available: true, category: "Medicine" },
-      { id: 202, name: "Vitamin C Tablets", price: 85, available: true, category: "Medicine" },
-      { id: 203, name: "Hand Sanitizer 200ml", price: 65, available: true, category: "Healthcare" },
-      { id: 204, name: "Blood Pressure Monitor", price: 1200, available: true, category: "Equipment" },
-    ]
-  },
-  {
-    id: 3,
-    name: "TechZone Electronics",
-    category: "Electronics",
-    address: "8, Sayajigunj, Vadodara",
-    phone: "9823456789",
-    hours: "10:00 AM - 8:00 PM",
-    rating: 4.3,
-    reviews: 67,
-    distance: "1.2 km",
-    image: null,
-    ownerId: "owner3",
-    products: [
-      { id: 301, name: "USB-C Charging Cable", price: 250, available: true, category: "Accessories" },
-      { id: 302, name: "Bluetooth Earphones", price: 1499, available: true, category: "Audio" },
-      { id: 303, name: "Phone Screen Guard", price: 120, available: true, category: "Accessories" },
-      { id: 304, name: "Power Bank 10000mAh", price: 999, available: false, category: "Accessories" },
-      { id: 305, name: "LED Bulb 9W", price: 85, available: true, category: "Lighting" },
-    ]
-  },
-  {
-    id: 4,
-    name: "Fresh Bakes",
-    category: "Food",
-    address: "22, Karelibaug, Vadodara",
-    phone: "9845678901",
-    hours: "6:00 AM - 9:00 PM",
-    rating: 4.6,
-    reviews: 211,
-    distance: "0.5 km",
-    image: null,
-    ownerId: "owner4",
-    products: [
-      { id: 401, name: "Whole Wheat Bread", price: 45, available: true, category: "Bakery" },
-      { id: 402, name: "Butter Croissant", price: 35, available: true, category: "Bakery" },
-      { id: 403, name: "Chocolate Cake (500g)", price: 280, available: true, category: "Cakes" },
-      { id: 404, name: "Muffin (6 pcs)", price: 120, available: true, category: "Bakery" },
-    ]
-  },
-  {
-    id: 5,
-    name: "Shree Hardware",
-    category: "Hardware",
-    address: "67, Nizampura, Vadodara",
-    phone: "9867890123",
-    hours: "9:00 AM - 7:00 PM",
-    rating: 4.1,
-    reviews: 45,
-    distance: "1.8 km",
-    image: null,
-    ownerId: "owner5",
-    products: [
-      { id: 501, name: "Hammer 500g", price: 180, available: true, category: "Tools" },
-      { id: 502, name: "Paint Brush Set", price: 220, available: true, category: "Painting" },
-      { id: 503, name: "Extension Cord 5m", price: 350, available: true, category: "Electrical" },
-      { id: 504, name: "Door Lock (Brass)", price: 450, available: true, category: "Hardware" },
-    ]
-  }
-];
 
 export function AppProvider({ children }) {
   const [currentScreen, setCurrentScreen] = useState('splash');
   const [currentUser, setCurrentUser] = useState(null);
-  const [shops, setShops] = useState(MOCK_SHOPS);
+  const [shops, setShops] = useState([]);
   const [favorites, setFavorites] = useState([]);
   const [selectedShop, setSelectedShop] = useState(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const userData = { id: user.uid, email: user.email, ...docSnap.data() };
+          setCurrentUser(userData);
+          if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
+          else setCurrentScreen('customerHome');
+        } else {
+          const defaultUser = { id: user.uid, email: user.email, name: user.displayName, role: 'customer' };
+          setCurrentUser(defaultUser);
+          setCurrentScreen('customerHome');
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setLoadingConfig(false);
+    });
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const unsub = onSnapshot(collection(db, 'shops'), (snapshot) => {
+      const dbShops = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setShops(dbShops);
+    });
+    return unsub;
+  }, [currentUser]);
 
   const login = (user) => {
+    // For legacy mock support or bypass
     setCurrentUser(user);
-    if (user.role === 'owner') {
-      setCurrentScreen('ownerDashboard');
-    } else {
-      setCurrentScreen('customerHome');
+    if (user.role === 'owner') setCurrentScreen('ownerDashboard');
+    else setCurrentScreen('customerHome');
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setCurrentUser(null);
+      setCurrentScreen('login');
+      setShops([]);
+    } catch(err) {
+      console.error(err);
     }
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    setCurrentScreen('login');
-  };
-
   const toggleFavorite = (shopId) => {
-    setFavorites(prev =>
+    setFavorites(prev => 
       prev.includes(shopId) ? prev.filter(id => id !== shopId) : [...prev, shopId]
     );
   };
 
-  const addShop = (shopData) => {
+  const addShop = async (shopData) => {
     const newShop = {
       ...shopData,
-      id: Date.now(),
       rating: 0,
       reviews: 0,
-      distance: "0.1 km",
+      distance: (Math.random() * 5).toFixed(1) + " km", 
       products: [],
-      ownerId: currentUser?.id
+      ownerId: currentUser?.id,
+      createdAt: new Date().toISOString()
     };
-    setShops(prev => [...prev, newShop]);
-    return newShop;
+    try {
+      const docRef = await addDoc(collection(db, 'shops'), newShop);
+      return { id: docRef.id, ...newShop };
+    } catch(err) {
+      console.error(err);
+    }
   };
 
-  const addProduct = (shopId, product) => {
-    setShops(prev => prev.map(shop =>
-      shop.id === shopId
-        ? { ...shop, products: [...shop.products, { ...product, id: Date.now() }] }
-        : shop
-    ));
+  const addProduct = async (shopId, product) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const newProduct = { ...product, id: Date.now().toString() };
+    const updatedProducts = [...shop.products, newProduct];
+    const shopRef = doc(db, 'shops', shopId);
+    await updateDoc(shopRef, { products: updatedProducts });
   };
 
-  const deleteProduct = (shopId, productId) => {
-    setShops(prev => prev.map(shop =>
-      shop.id === shopId
-        ? { ...shop, products: shop.products.filter(p => p.id !== productId) }
-        : shop
-    ));
+  const deleteProduct = async (shopId, productId) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const updatedProducts = shop.products.filter(p => p.id !== productId);
+    const shopRef = doc(db, 'shops', shopId);
+    await updateDoc(shopRef, { products: updatedProducts });
   };
 
   const getOwnerShop = () => {
@@ -169,7 +113,7 @@ export function AppProvider({ children }) {
     const q = query.toLowerCase();
     const results = [];
     shops.forEach(shop => {
-      const matchingProducts = shop.products.filter(p =>
+      const matchingProducts = (shop.products || []).filter(p => 
         p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)
       );
       if (matchingProducts.length > 0 || shop.name.toLowerCase().includes(q) || shop.category.toLowerCase().includes(q)) {
@@ -182,9 +126,10 @@ export function AppProvider({ children }) {
   return (
     <AppContext.Provider value={{
       currentScreen, setCurrentScreen,
-      currentUser, login, logout,
+      currentUser, setCurrentUser, login, logout,
       shops, favorites, toggleFavorite, selectedShop, setSelectedShop,
-      addShop, addProduct, deleteProduct, getOwnerShop, searchProducts
+      addShop, addProduct, deleteProduct, getOwnerShop, searchProducts,
+      loadingConfig
     }}>
       {children}
     </AppContext.Provider>

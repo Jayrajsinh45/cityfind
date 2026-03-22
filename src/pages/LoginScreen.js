@@ -1,37 +1,121 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { auth, db, googleProvider } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 export default function LoginScreen() {
-  const { setCurrentScreen, login } = useApp();
+  const { setCurrentScreen, setCurrentUser, login } = useApp();
   const [mode, setMode] = useState('login'); // login | signup | role
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [selectedRole, setSelectedRole] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!form.email || !form.password) { setError('Please fill all fields'); return; }
-    // Mock login — demo accounts
+    
+    // Demo bypass support
     if (form.email === 'owner@demo.com') {
       login({ id: 'owner1', name: 'Rajesh Patel', email: form.email, role: 'owner' });
-    } else {
-      login({ id: 'user1', name: 'Demo User', email: form.email, role: 'customer' });
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const userCred = await signInWithEmailAndPassword(auth, form.email, form.password);
+      const user = userCred.user;
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setCurrentUser({ id: user.uid, email: user.email, ...data });
+        if (data.role === 'owner') setCurrentScreen('ownerDashboard');
+        else setCurrentScreen('customerHome');
+      } else {
+        setCurrentScreen('customerHome');
+      }
+    } catch (err) {
+      setError("Login failed: " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!form.name || !form.email || !form.password) { setError('Please fill all fields'); return; }
     setMode('role');
     setError('');
   };
 
-  const handleRoleSelect = () => {
+  const handleRoleSelect = async () => {
     if (!selectedRole) { setError('Please select a role'); return; }
-    login({ id: Date.now().toString(), name: form.name, email: form.email, role: selectedRole });
+    
+    setLoading(true);
+    setError('');
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const user = userCred.user;
+      
+      const userData = {
+        name: form.name,
+        email: form.email,
+        role: selectedRole,
+        createdAt: new Date().toISOString()
+      };
+      
+      await setDoc(doc(db, 'users', user.uid), userData);
+      setCurrentUser({ id: user.uid, ...userData });
+      
+      if (selectedRole === 'owner') setCurrentScreen('ownerDashboard');
+      else setCurrentScreen('customerHome');
+    } catch(err) {
+      setError("Signup failed: " + err.message);
+      setMode('signup');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogle = (role) => {
-    if (mode === 'signup') { setMode('role'); return; }
-    login({ id: 'google1', name: 'Google User', email: 'user@gmail.com', role: 'customer' });
+  const handleGoogle = async () => {
+    if (mode === 'signup' && !selectedRole) {
+      // Must select role first if signing up
+      setMode('role');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        const role = selectedRole || 'customer';
+        const userData = {
+          name: user.displayName || 'Google User',
+          email: user.email,
+          role: role,
+          createdAt: new Date().toISOString()
+        };
+        await setDoc(userRef, userData);
+        setCurrentUser({ id: user.uid, ...userData });
+        if (role === 'owner') setCurrentScreen('ownerDashboard');
+        else setCurrentScreen('customerHome');
+      } else {
+        const userData = userSnap.data();
+        setCurrentUser({ id: user.uid, email: user.email, ...userData });
+        if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
+        else setCurrentScreen('customerHome');
+      }
+    } catch (err) {
+      setError("Google Sign-In failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (mode === 'role') {
@@ -100,8 +184,8 @@ export default function LoginScreen() {
 
           {error && <p style={{ color: '#e53e3e', fontSize: 13, marginBottom: 12, textAlign: 'center' }}>{error}</p>}
 
-          <button className="btn-primary" onClick={handleRoleSelect} style={{ marginTop: 16 }}>
-            Continue →
+          <button className="btn-primary" onClick={handleRoleSelect} disabled={loading} style={{ marginTop: 16, opacity: loading ? 0.7 : 1 }}>
+            {loading ? 'Processing...' : 'Continue →'}
           </button>
         </div>
       </div>
@@ -187,15 +271,17 @@ export default function LoginScreen() {
 
           {mode === 'login' && (
             <p style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
-              Demo: any email = customer | owner@demo.com = owner
+              Test Demo without Firebase: owner@demo.com
             </p>
           )}
 
           <button
             className="btn-primary"
             onClick={mode === 'login' ? handleLogin : handleSignup}
+            disabled={loading}
+            style={{ opacity: loading ? 0.7 : 1 }}
           >
-            {mode === 'login' ? 'Login' : 'Continue'}
+            {loading ? 'Loading...' : (mode === 'login' ? 'Login' : 'Continue')}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -204,7 +290,7 @@ export default function LoginScreen() {
             <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
           </div>
 
-          <button className="btn-google" onClick={handleGoogle}>
+          <button className="btn-google" onClick={handleGoogle} disabled={loading} style={{ opacity: loading ? 0.7 : 1 }}>
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
