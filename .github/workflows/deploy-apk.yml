@@ -62,7 +62,7 @@ jobs:
     - name: Build Android APK
       run: |
         cd android
-        sed -i 's/gradle-8.2.1-all.zip/gradle-8.7-all.zip/g' gradle/wrapper/gradle-wrapper.properties
+        echo "configurations.all { resolutionStrategy { force 'org.bouncycastle:bcprov-jdk15to18:1.78.1'; force 'org.bouncycastle:bcprov-jdk18on:1.78.1' } }" >> app/build.gradle
         ./gradlew assembleDebug --no-daemon --no-parallel --stacktrace
         
     - name: Upload Android APK
