@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Build web application
+    - name: Build web application (with /cityfind prefix for GitHub Pages)
       run: npm run build
       env:
         CI: false
@@ -39,12 +39,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: CityFind-Web-Build
-        path: build/
-
-    - name: Save build folder for APK job
-      uses: actions/upload-artifact@v4
-      with:
-        name: web-build
         path: build/
 
   build-apk:
@@ -66,17 +60,17 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Download web build
-      uses: actions/download-artifact@v4
-      with:
-        name: web-build
-        path: build/
-
     - name: Install dependencies
       run: npm install
 
-    - name: Install Capacitor
+    - name: Install Capacitor v5
       run: npm install @capacitor/cli@5 @capacitor/core@5 @capacitor/android@5
+
+    - name: Build React app with PUBLIC_URL=/ for APK (no /cityfind prefix)
+      run: npm run build
+      env:
+        CI: false
+        PUBLIC_URL: /
 
     - name: Initialise and sync Capacitor
       run: |
@@ -84,10 +78,21 @@ jobs:
         npx cap add android
         npx cap sync android
 
-    - name: Print Gradle and AGP versions (debug)
+    - name: Add internet permission to AndroidManifest
       run: |
+        sed -i 's|<uses-permission android:name="android.permission.INTERNET" />||g' android/app/src/main/AndroidManifest.xml
+        sed -i 's|<manifest|<manifest xmlns:android="http://schemas.android.com/apk/res/android"|g' android/app/src/main/AndroidManifest.xml || true
+        grep -q 'INTERNET' android/app/src/main/AndroidManifest.xml || \
+          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET" />\n    <application|g' android/app/src/main/AndroidManifest.xml
+
+    - name: Print build config (debug)
+      run: |
+        echo "=== Gradle wrapper ==="
         cat android/gradle/wrapper/gradle-wrapper.properties
+        echo "=== build.gradle ==="
         cat android/build.gradle
+        echo "=== index.html check ==="
+        head -5 build/index.html
 
     - name: Grant execute permission for gradlew
       run: chmod +x android/gradlew
