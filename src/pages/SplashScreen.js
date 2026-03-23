@@ -12,6 +12,7 @@ export default function SplashScreen() {
     const hardTimeout = setTimeout(() => {
       if (currentUser) {
         if (currentUser.role === 'owner') setCurrentScreen('ownerDashboard');
+        else if (currentUser.role === 'rider') setCurrentScreen('riderDashboard');
         else setCurrentScreen('customerHome');
       } else {
         setCurrentScreen('login');
@@ -26,6 +27,7 @@ export default function SplashScreen() {
         clearTimeout(hardTimeout);
         if (currentUser) {
           if (currentUser.role === 'owner') setCurrentScreen('ownerDashboard');
+          else if (currentUser.role === 'rider') setCurrentScreen('riderDashboard');
           else setCurrentScreen('customerHome');
         } else {
           setCurrentScreen('login');

@@ -40,6 +40,7 @@ export default function LoginScreen() {
         const data = userDoc.data();
         setCurrentUser({ id: user.uid, email: user.email, ...data });
         if (data.role === 'owner') setCurrentScreen('ownerDashboard');
+        else if (data.role === 'rider') setCurrentScreen('riderDashboard');
         else setCurrentScreen('customerHome');
       } else {
         setCurrentScreen('customerHome');
@@ -78,6 +79,7 @@ export default function LoginScreen() {
       setCurrentUser({ id: user.uid, ...userData });
       
       if (selectedRole === 'owner') setCurrentScreen('ownerDashboard');
+      else if (selectedRole === 'rider') setCurrentScreen('riderDashboard');
       else setCurrentScreen('customerHome');
     } catch(err) {
       console.error(err);
@@ -114,11 +116,13 @@ export default function LoginScreen() {
         await setDoc(userRef, userData);
         setCurrentUser({ id: user.uid, ...userData });
         if (role === 'owner') setCurrentScreen('ownerDashboard');
+        else if (role === 'rider') setCurrentScreen('riderDashboard');
         else setCurrentScreen('customerHome');
       } else {
         const userData = userSnap.data();
         setCurrentUser({ id: user.uid, email: user.email, ...userData });
         if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
+        else if (userData.role === 'rider') setCurrentScreen('riderDashboard');
         else setCurrentScreen('customerHome');
       }
     } catch (err) {
@@ -146,15 +150,15 @@ export default function LoginScreen() {
             Choose how you'll use CityFind
           </p>
 
-          {['customer', 'owner'].map(role => (
+          {['customer', 'owner', 'rider'].map(role => (
             <div
               key={role}
               onClick={() => setSelectedRole(role)}
               style={{
                 border: `2px solid ${selectedRole === role ? 'var(--primary)' : 'var(--border)'}`,
                 borderRadius: 20,
-                padding: 24,
-                marginBottom: 16,
+                padding: 16,
+                marginBottom: 12,
                 background: selectedRole === role ? 'var(--primary-light)' : 'var(--surface)',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -164,20 +168,20 @@ export default function LoginScreen() {
               }}
             >
               <div style={{
-                width: 56, height: 56,
+                width: 48, height: 48,
                 background: selectedRole === role ? 'var(--primary)' : 'var(--surface3)',
                 borderRadius: 16,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 28, transition: 'all 0.2s',
+                fontSize: 24, transition: 'all 0.2s',
               }}>
-                {role === 'customer' ? '👤' : '🏪'}
+                {role === 'customer' ? '👤' : role === 'owner' ? '🏪' : '🛵'}
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 17, fontFamily: 'var(--font-display)', color: selectedRole === role ? 'var(--primary)' : 'var(--text)' }}>
-                  {role === 'customer' ? 'Customer' : 'Business Owner'}
+                <div style={{ fontWeight: 700, fontSize: 16, fontFamily: 'var(--font-display)', color: selectedRole === role ? 'var(--primary)' : 'var(--text)' }}>
+                  {role === 'customer' ? 'Customer' : role === 'owner' ? 'Business Owner' : 'Delivery Rider'}
                 </div>
                 <div style={{ color: 'var(--text2)', fontSize: 13, marginTop: 2 }}>
-                  {role === 'customer' ? 'Search & find local shops' : 'List my shop & products'}
+                  {role === 'customer' ? 'Search & find local shops' : role === 'owner' ? 'List my shop & products' : 'Deliver items locally'}
                 </div>
               </div>
               <div style={{ marginLeft: 'auto' }}>

@@ -13,6 +13,11 @@ export function AppProvider({ children }) {
   const [selectedShop, setSelectedShop] = useState(null);
   const [loadingConfig, setLoadingConfig] = useState(true);
 
+  // Phase 5 State
+  const [posts, setPosts] = useState([]);      // City Pulse
+  const [transit, setTransit] = useState([]);  // Live Transit
+  const [orders, setOrders] = useState([]);    // Rider Network
+
   useEffect(() => {
     let unsub = () => {};
     try {
@@ -25,6 +30,7 @@ export function AppProvider({ children }) {
               const userData = { id: user.uid, email: user.email, ...docSnap.data() };
               setCurrentUser(userData);
               if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
+              else if (userData.role === 'rider') setCurrentScreen('riderDashboard');
               else setCurrentScreen('customerHome');
             } else {
               const defaultUser = { id: user.uid, email: user.email, name: user.displayName, role: 'customer' };
@@ -54,17 +60,45 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (!currentUser) return;
-    const unsub = onSnapshot(collection(db, 'shops'), (snapshot) => {
+    
+    // Listen to shops
+    const unsubShops = onSnapshot(collection(db, 'shops'), (snapshot) => {
       const dbShops = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setShops(dbShops);
     });
-    return unsub;
+
+    // Listen to posts (City Pulse)
+    const unsubPosts = onSnapshot(collection(db, 'posts'), (snapshot) => {
+      const dbPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPosts(dbPosts.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    });
+
+    // Listen to orders (Rider Network)
+    const unsubOrders = onSnapshot(collection(db, 'orders'), (snapshot) => {
+      const dbOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setOrders(dbOrders.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    });
+
+    // Mock Transit Data (since real tracking needs hardware/API integrations not currently active)
+    setTransit([
+      { id: '1', type: 'bus', route: '104 - City Center to North Hub', status: 'On Time', eta: '5 mins', location: 'Main Street' },
+      { id: '2', type: 'bus', route: '201 - Station to Airport', status: 'Delayed', eta: '12 mins', location: 'Park Avenue' },
+      { id: '3', type: 'parking', route: 'Central Mall Parking', status: 'Available', spots: 45, location: 'City Center' },
+      { id: '4', type: 'rickshaw', route: 'Station Stand', status: 'Available', count: 12, location: 'Railway Station' }
+    ]);
+
+    return () => {
+      unsubShops();
+      unsubPosts();
+      unsubOrders();
+    };
   }, [currentUser]);
 
   const login = (user) => {
     // For legacy mock support or bypass
     setCurrentUser(user);
     if (user.role === 'owner') setCurrentScreen('ownerDashboard');
+    else if (user.role === 'rider') setCurrentScreen('riderDashboard');
     else setCurrentScreen('customerHome');
   };
 
@@ -139,13 +173,56 @@ export function AppProvider({ children }) {
     return results;
   };
 
+  // --- Phase 5 Methods ---
+
+  const addPost = async (content, image = null) => {
+    const newPost = {
+      content,
+      image,
+      authorId: currentUser.id,
+      authorName: currentUser.name,
+      likes: 0,
+      createdAt: new Date().toISOString()
+    };
+    await addDoc(collection(db, 'posts'), newPost);
+  };
+
+  const likePost = async (postId, currentLikes) => {
+    await updateDoc(doc(db, 'posts', postId), { likes: currentLikes + 1 });
+  };
+
+  const createOrder = async (shopId, products, total) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const newOrder = {
+      customerId: currentUser.id,
+      customerName: currentUser.name,
+      shopId,
+      shopName: shop.name,
+      products,
+      total,
+      status: 'pending', // pending -> accepted -> picked_up -> delivered
+      riderId: null,
+      createdAt: new Date().toISOString()
+    };
+    await addDoc(collection(db, 'orders'), newOrder);
+  };
+
+  const updateOrderStatus = async (orderId, status, riderId = null) => {
+    const updates = { status };
+    if (riderId) updates.riderId = riderId;
+    await updateDoc(doc(db, 'orders', orderId), updates);
+  };
+
   return (
     <AppContext.Provider value={{
       currentScreen, setCurrentScreen,
       currentUser, setCurrentUser, login, logout,
       shops, favorites, toggleFavorite, selectedShop, setSelectedShop,
       addShop, addProduct, deleteProduct, getOwnerShop, searchProducts,
-      loadingConfig
+      loadingConfig,
+      // Phase 5 exports
+      posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus
     }}>
       {children}
     </AppContext.Provider>

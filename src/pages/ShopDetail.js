@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
 const CATEGORY_ICONS = {
@@ -6,7 +6,8 @@ const CATEGORY_ICONS = {
 };
 
 export default function ShopDetail() {
-  const { selectedShop, setCurrentScreen, favorites, toggleFavorite } = useApp();
+  const { selectedShop, setCurrentScreen, favorites, toggleFavorite, createOrder } = useApp();
+  const [orderMessage, setOrderMessage] = useState('');
 
   if (!selectedShop) return null;
   const shop = selectedShop;
@@ -141,6 +142,12 @@ export default function ShopDetail() {
           </a>
         </div>
 
+        {orderMessage && (
+          <div style={{ background: '#E8F5E9', color: '#2e7d32', padding: 12, borderRadius: 12, marginBottom: 20, textAlign: 'center', fontSize: 14, fontWeight: 600 }}>
+            {orderMessage}
+          </div>
+        )}
+
         {/* Products */}
         <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
           Products & Services ({shop.products.length})
@@ -169,14 +176,28 @@ export default function ShopDetail() {
                     <p style={{ fontWeight: 600, fontSize: 14 }}>{product.name}</p>
                     <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 15, marginTop: 2 }}>₹{product.price}</p>
                   </div>
-                  <span style={{
-                    background: product.available ? '#E8F5E9' : '#FEE2E2',
-                    color: product.available ? '#2e7d32' : '#c62828',
-                    fontSize: 11, fontWeight: 600,
-                    padding: '4px 10px', borderRadius: 20,
-                  }}>
-                    {product.available ? 'In Stock' : 'Out of Stock'}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                    <span style={{
+                      background: product.available ? '#E8F5E9' : '#FEE2E2',
+                      color: product.available ? '#2e7d32' : '#c62828',
+                      fontSize: 11, fontWeight: 600,
+                      padding: '4px 10px', borderRadius: 20,
+                    }}>
+                      {product.available ? 'In Stock' : 'Out of Stock'}
+                    </span>
+                    {product.available && (
+                      <button 
+                        onClick={async () => {
+                          await createOrder(shop.id, [{ name: product.name, price: product.price, qty: 1 }], product.price);
+                          setOrderMessage(`Ordered 1x ${product.name}! Waiting for rider.`);
+                          setTimeout(() => setOrderMessage(''), 4000);
+                        }}
+                        style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Order
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

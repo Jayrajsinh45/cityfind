@@ -11,22 +11,32 @@ const CATEGORIES = [
 ];
 
 export default function CustomerHome() {
-  const { currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts } = useApp();
+  const { currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, posts, transit, addPost, likePost } = useApp();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('home'); // home | search | favorites | profile
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
 
   const handleSearch = (val) => {
     setSearch(val);
     if (val.trim()) {
       setSearchResults(searchProducts(val));
       setHasSearched(true);
-      setTab('search');
+      if (tab !== 'search') setTab('search');
     } else {
       setSearchResults([]);
       setHasSearched(false);
     }
+  };
+
+  const submitPost = async () => {
+    if (!newPostContent.trim()) return;
+    setIsPosting(true);
+    await addPost(newPostContent);
+    setNewPostContent('');
+    setIsPosting(false);
   };
 
   const openShop = (shop) => {
@@ -225,6 +235,115 @@ export default function CustomerHome() {
           </div>
         )}
 
+        {tab === 'pulse' && (
+          <div style={{ padding: '20px 24px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, marginBottom: 8 }}>
+              City Pulse
+            </h3>
+            <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 20 }}>
+              Live updates from your community.
+            </p>
+
+            {/* Post creator */}
+            <div style={{ background: 'white', borderRadius: 20, padding: 16, marginBottom: 24, boxShadow: 'var(--shadow)' }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 20, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                  👤
+                </div>
+                <div style={{ flex: 1 }}>
+                  <textarea 
+                    placeholder="What's happening in your area?"
+                    value={newPostContent}
+                    onChange={e => setNewPostContent(e.target.value)}
+                    style={{ width: '100%', border: 'none', outline: 'none', resize: 'none', fontSize: 15, fontFamily: 'var(--font-sans)', minHeight: 60 }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                    <button 
+                      onClick={submitPost}
+                      disabled={isPosting || !newPostContent.trim()}
+                      className="btn-primary" 
+                      style={{ padding: '8px 20px', fontSize: 13, borderRadius: 12, opacity: isPosting ? 0.7 : 1 }}
+                    >
+                      {isPosting ? '...' : 'Post'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feed */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {posts.map(post => (
+                <div key={post.id} style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 20, background: '#F3E5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                      📢
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-display)' }}>{post.authorName}</div>
+                      <div style={{ color: 'var(--text3)', fontSize: 11 }}>{new Date(post.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.5, marginBottom: 16 }}>
+                    {post.content}
+                  </p>
+                  <div style={{ display: 'flex', gap: 16, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                    <button 
+                      onClick={() => likePost(post.id, post.likes)} 
+                      style={{ color: 'var(--text2)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}
+                    >
+                      <span style={{ fontSize: 16 }}>👍</span> {post.likes} Likes
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {posts.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text2)' }}>
+                  No posts yet. Be the first to share an update!
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === 'transit' && (
+          <div style={{ padding: '20px 24px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, marginBottom: 8 }}>
+              Live Transit
+            </h3>
+            <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 20 }}>
+              City transport schedules and parking.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {transit.map(t => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 16, background: 'white', borderRadius: 20, padding: 16, boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: t.type === 'bus' ? '#E3F2FD' : t.type === 'parking' ? '#E8F5E9' : '#FFF3E0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>
+                    {t.type === 'bus' ? '🚌' : t.type === 'parking' ? '🅿️' : '🛺'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, fontFamily: 'var(--font-display)' }}>{t.route}</div>
+                    <div style={{ color: 'var(--text3)', fontSize: 12, marginTop: 4 }}>📍 {t.location}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ 
+                      fontSize: 11, fontWeight: 700, 
+                      color: t.status === 'Available' || t.status === 'On Time' ? '#2e7d32' : '#c62828',
+                      background: t.status === 'Available' || t.status === 'On Time' ? '#E8F5E9' : '#FEE2E2',
+                      padding: '4px 10px', borderRadius: 20, display: 'inline-block', marginBottom: 6
+                    }}>
+                      {t.status}
+                    </div>
+                    {t.eta && <div style={{ fontSize: 15, fontWeight: 800 }}>{t.eta}</div>}
+                    {t.spots && <div style={{ fontSize: 15, fontWeight: 800 }}>{t.spots} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text2)' }}>spots</span></div>}
+                    {t.count && <div style={{ fontSize: 15, fontWeight: 800 }}>{t.count} <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text2)' }}>vehicles</span></div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {tab === 'profile' && (
           <div style={{ padding: '20px 24px' }}>
             <div style={{
@@ -298,7 +417,8 @@ export default function CustomerHome() {
       }}>
         {[
           { id: 'home', icon: '🏠', label: 'Home' },
-          { id: 'search', icon: '🔍', label: 'Search' },
+          { id: 'pulse', icon: '🗣️', label: 'Pulse' },
+          { id: 'transit', icon: '🚌', label: 'Transit' },
           { id: 'favorites', icon: '❤️', label: 'Saved' },
           { id: 'profile', icon: '👤', label: 'Profile' },
         ].map(item => (
