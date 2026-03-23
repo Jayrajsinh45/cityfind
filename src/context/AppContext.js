@@ -18,6 +18,28 @@ export function AppProvider({ children }) {
   const [transit, setTransit] = useState([]);  // Live Transit
   const [orders, setOrders] = useState([]);    // Rider Network
 
+  // Phase 2, 3, 4 State (Mocked for full city vision)
+  const [services, setServices] = useState([
+    { id: 's1', name: 'Ramesh Plumbing', category: 'Plumber', rating: 4.8, phone: '555-0101', distance: '1.2 km' },
+    { id: 's2', name: 'QuickFix Electric', category: 'Electrician', rating: 4.5, phone: '555-0102', distance: '0.8 km' }
+  ]);
+  const [healthInfo, setHealthInfo] = useState({
+    hospitals: [{ id: 'h1', name: 'City Medical Center', beds: 12, distance: '2.5 km' }],
+    sosAlerts: []
+  });
+  const [jobs, setJobs] = useState([
+    { id: 'j1', title: 'Shop Assistant Needed', shop: 'Krishna Mart', salary: '₹12k/month' }
+  ]);
+  const [civicIssues, setCivicIssues] = useState([
+    { id: 'c1', title: 'Deep Pothole on MG Road', status: 'Reported', upvotes: 14 }
+  ]);
+  const [realEstate, setRealEstate] = useState([
+    { id: 'r1', title: '1 BHK for Rent', location: 'City Center', rent: '₹15k/month' }
+  ]);
+  const [events, setEvents] = useState([
+    { id: 'e1', title: 'Sunday Open Mic', date: 'This Sunday, 7 PM', location: 'Cafe Central' }
+  ]);
+
   useEffect(() => {
     let unsub = () => {};
     try {
@@ -214,6 +236,10 @@ export function AppProvider({ children }) {
     await updateDoc(doc(db, 'orders', orderId), updates);
   };
 
+  const addCivicIssue = (title) => {
+    setCivicIssues([{ id: Date.now().toString(), title, status: 'Reported', upvotes: 0 }, ...civicIssues]);
+  };
+
   return (
     <AppContext.Provider value={{
       currentScreen, setCurrentScreen,
@@ -222,7 +248,9 @@ export function AppProvider({ children }) {
       addShop, addProduct, deleteProduct, getOwnerShop, searchProducts,
       loadingConfig,
       // Phase 5 exports
-      posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus
+      posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus,
+      // Phase 2, 3, 4 exports
+      services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events
     }}>
       {children}
     </AppContext.Provider>

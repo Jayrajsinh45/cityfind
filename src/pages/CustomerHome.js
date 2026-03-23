@@ -11,13 +11,19 @@ const CATEGORIES = [
 ];
 
 export default function CustomerHome() {
-  const { currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, posts, transit, addPost, likePost } = useApp();
+  const { 
+    currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, 
+    posts, transit, addPost, likePost,
+    services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events
+  } = useApp();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('home'); // home | search | favorites | profile
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [isPosting, setIsPosting] = useState(false);
+  const [activeModule, setActiveModule] = useState('shops'); // shops | services | health | civic | jobs | realestate | events
+  const [newIssue, setNewIssue] = useState('');
 
   const handleSearch = (val) => {
     setSearch(val);
@@ -167,7 +173,45 @@ export default function CustomerHome() {
         </div>
 
         {tab === 'home' && (
-          <div style={{ padding: '20px 24px' }}>
+          <div style={{ padding: '0 24px 20px' }}>
+            {/* Mega Menu / Module Picker */}
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '20px 0', margin: '0 -24px', paddingLeft: 24, scrollbarWidth: 'none' }}>
+              {[
+                { id: 'shops', name: 'Shops', icon: '🛍️', color: '#FFF3E0' },
+                { id: 'services', name: 'Services', icon: '🔧', color: '#E3F2FD' },
+                { id: 'health', name: 'Health & SOS', icon: '🏥', color: '#FFEBEE' },
+                { id: 'civic', name: 'Civic Voice', icon: '🛣️', color: '#E8F5E9' },
+                { id: 'jobs', name: 'Local Jobs', icon: '💼', color: '#F3E5F5' },
+                { id: 'realestate', name: 'Real Estate', icon: '🏠', color: '#E0F2F1' },
+                { id: 'events', name: 'Events', icon: '🎉', color: '#FFF8E1' },
+              ].map(mod => (
+                <div 
+                  key={mod.id} 
+                  onClick={() => setActiveModule(mod.id)}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0,
+                    width: 76,
+                    cursor: 'pointer',
+                    opacity: activeModule === mod.id ? 1 : 0.6,
+                    transform: activeModule === mod.id ? 'scale(1.05)' : 'scale(1)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ width: 62, height: 62, borderRadius: 20, background: mod.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, boxShadow: activeModule === mod.id ? '0 4px 12px rgba(0,0,0,0.1)' : 'none', border: activeModule === mod.id ? '2px solid var(--primary)' : '2px solid transparent' }}>
+                    {mod.icon}
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: activeModule === mod.id ? 700 : 500, textAlign: 'center', color: 'var(--text)' }}>
+                    {mod.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ height: 1, background: 'var(--border)', margin: '4px 0 24px' }} />
+
+            {/* --- MODULE: SHOPS --- */}
+            {activeModule === 'shops' && (
+              <div>
             {/* Categories */}
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Categories</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 28 }}>
@@ -195,6 +239,123 @@ export default function CustomerHome() {
               Nearby Shops
             </h3>
             {shops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
+              </div>
+            )}
+
+            {/* --- MODULE: SERVICES --- */}
+            {activeModule === 'services' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Professional Services</h3>
+                {services.map(s => (
+                  <div key={s.id} style={{ background: 'white', borderRadius: 20, padding: 16, marginBottom: 12, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ width: 50, height: 50, background: '#E3F2FD', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🔧</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{s.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>{s.category} • ⭐ {s.rating} • 📍 {s.distance}</div>
+                    </div>
+                    <button style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', padding: '8px', borderRadius: 12, fontWeight: 700 }}>📞 Call</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* --- MODULE: HEALTH --- */}
+            {activeModule === 'health' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Hospitals & Clinics</h3>
+                {healthInfo.hospitals.map(h => (
+                  <div key={h.id} style={{ background: 'white', borderRadius: 20, padding: 16, marginBottom: 12, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ width: 50, height: 50, background: '#FFEBEE', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🏥</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{h.name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>📍 {h.distance}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ background: '#E8F5E9', color: '#2e7d32', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{h.beds} Beds</span>
+                    </div>
+                  </div>
+                ))}
+                
+                <button style={{ width: '100%', padding: '16px', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', borderRadius: 16, fontWeight: 700, marginTop: 12, display: 'flex', justifyContent: 'center', gap: 8, fontSize: 15 }}>
+                  <span style={{ fontSize: 18 }}>🩸</span> Request Blood (SOS)
+                </button>
+              </div>
+            )}
+
+            {/* --- MODULE: CIVIC VOICE --- */}
+            {activeModule === 'civic' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Report Local Issues</h3>
+                
+                <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                  <input value={newIssue} onChange={e => setNewIssue(e.target.value)} placeholder="E.g., Broken street light on Main Rd" style={{ flex: 1, padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface2)', outline: 'none' }} />
+                  <button onClick={() => { if(newIssue){ addCivicIssue(newIssue); setNewIssue(''); } }} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '0 20px', borderRadius: 12, fontWeight: 700 }}>Report</button>
+                </div>
+
+                {civicIssues.map(c => (
+                  <div key={c.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12, display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{c.title}</div>
+                      <span style={{ background: '#FFF8E1', color: '#F59E0B', fontSize: 11, padding: '3px 8px', borderRadius: 10, fontWeight: 600 }}>{c.status}</span>
+                    </div>
+                    <button style={{ background: 'var(--surface2)', border: 'none', padding: '8px 16px', borderRadius: 12, fontWeight: 600, color: 'var(--text)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span>⬆️</span>
+                      <span style={{ fontSize: 12 }}>{c.upvotes}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* --- MODULE: JOBS --- */}
+            {activeModule === 'jobs' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Local Job Board</h3>
+                {jobs.map(j => (
+                  <div key={j.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{j.title}</div>
+                      <span style={{ background: '#E8F5E9', color: '#2e7d32', fontSize: 12, padding: '4px 8px', borderRadius: 12, fontWeight: 600 }}>{j.salary}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>🏪 {j.shop}</div>
+                    <button style={{ width: '100%', marginTop: 12, background: 'var(--primary-light)', color: 'var(--primary)', padding: '10px', borderRadius: 10, fontWeight: 600, border: 'none' }}>Apply Now</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* --- MODULE: REAL ESTATE --- */}
+            {activeModule === 'realestate' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>Properties & PG</h3>
+                {realEstate.map(r => (
+                  <div key={r.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12, display: 'flex', gap: 12 }}>
+                    <div style={{ width: 60, height: 60, background: '#E0F2F1', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🏠</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{r.title}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 4 }}>📍 {r.location}</div>
+                      <div style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>{r.rent}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* --- MODULE: EVENTS --- */}
+            {activeModule === 'events' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>City Events</h3>
+                {events.map(e => (
+                  <div key={e.id} style={{ background: 'linear-gradient(135deg, white, #FFF8E1)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, marginBottom: 12 }}>
+                    <div style={{ fontSize: 24, marginBottom: 8 }}>🎉</div>
+                    <div style={{ fontWeight: 800, fontSize: 18, fontFamily: 'var(--font-display)', marginBottom: 4 }}>{e.title}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>📅 {e.date}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>📍 {e.location}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
           </div>
         )}
 
