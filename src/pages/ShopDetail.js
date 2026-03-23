@@ -13,7 +13,6 @@ export default function ShopDetail() {
     if (selectedShop?.id) {
       incrementShopViews(selectedShop.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedShop?.id]);
 
   if (!selectedShop) return null;
