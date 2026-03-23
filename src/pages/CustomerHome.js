@@ -14,7 +14,8 @@ export default function CustomerHome() {
   const { 
     currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, 
     posts, transit, addPost, likePost,
-    civicIssues, addCivicIssue
+    civicIssues, addCivicIssue,
+    orders, rateOrder
   } = useApp();
 
   const services = shops.filter(s => s.category === 'Service/Repair');
@@ -24,6 +25,7 @@ export default function CustomerHome() {
   const events = shops.filter(s => s.category === 'Local Event');
   const marketplace = shops.filter(s => s.category === 'Buy & Sell/Marketplace');
   const retailShops = shops.filter(s => !['Service/Repair', 'Healthcare/Hospital', 'Job Listing', 'Real Estate/PG', 'Local Event', 'Buy & Sell/Marketplace'].includes(s.category));
+  const myOrders = orders ? orders.filter(o => o.customerId === currentUser?.id) : [];
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('home'); // home | search | favorites | profile
   const [searchResults, setSearchResults] = useState([]);
@@ -586,19 +588,52 @@ export default function CustomerHome() {
               </div>
             </div>
 
-            {[
-              { icon: '🏪', label: 'Nearby Shops', count: shops.length },
-              { icon: '❤️', label: 'Favourites', count: favorites.length },
-            ].map(item => (
-              <div key={item.label} style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '16px 0', borderBottom: '1px solid var(--border)',
-              }}>
-                <div style={{ fontSize: 24 }}>{item.icon}</div>
-                <span style={{ flex: 1, fontWeight: 500 }}>{item.label}</span>
-                <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{item.count}</span>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 12 }}>My Deliveries & Orders</h3>
+            {myOrders.length === 0 ? (
+              <div style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 20 }}>No items ordered yet.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                {myOrders.map(o => (
+                  <div key={o.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700, fontSize: 15 }}>{o.shopName}</span>
+                      <span style={{ 
+                        fontSize: 10, fontWeight: 700, padding: '4px 8px', borderRadius: 12,
+                        background: o.status === 'delivered' || o.status === 'rated' ? '#D1FAE5' : '#FEF3C7',
+                        color: o.status === 'delivered' || o.status === 'rated' ? '#10B981' : '#F59E0B'
+                      }}>
+                        {o.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>
+                      {o.products.map(p => `${p.qty}x ${p.name}`).join(', ')}
+                    </div>
+                    
+                    {o.status === 'delivered' && (
+                      <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Rate your experience:</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {[1,2,3,4,5].map(star => (
+                            <button
+                              key={star}
+                              onClick={() => rateOrder(o.id, o.shopId, star)}
+                              style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}
+                            >
+                              ⭐
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {o.status === 'rated' && (
+                      <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12, fontSize: 12, fontWeight: 700, color: 'var(--text3)' }}>
+                        You rated this {o.rating} ⭐
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
 
             <button
               onClick={logout}

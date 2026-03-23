@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 const CATEGORY_ICONS = {
@@ -6,8 +6,15 @@ const CATEGORY_ICONS = {
 };
 
 export default function ShopDetail() {
-  const { selectedShop, setCurrentScreen, favorites, toggleFavorite, createOrder } = useApp();
+  const { selectedShop, setCurrentScreen, favorites, toggleFavorite, createOrder, incrementShopViews } = useApp();
   const [orderMessage, setOrderMessage] = useState('');
+
+  useEffect(() => {
+    if (selectedShop?.id) {
+      incrementShopViews(selectedShop.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedShop?.id]);
 
   if (!selectedShop) return null;
   const shop = selectedShop;

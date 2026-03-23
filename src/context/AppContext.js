@@ -132,6 +132,7 @@ export function AppProvider({ children }) {
       ...shopData,
       rating: 0,
       reviews: 0,
+      views: 0,
       distance: (Math.random() * 5).toFixed(1) + " km", 
       products: [],
       ownerId: currentUser?.id,
@@ -172,6 +173,12 @@ export function AppProvider({ children }) {
 
   const editShop = async (shopId, updatedData) => {
     await updateDoc(doc(db, 'shops', shopId), updatedData);
+  };
+
+  const incrementShopViews = async (shopId) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    await updateDoc(doc(db, 'shops', shopId), { views: (shop.views || 0) + 1 });
   };
 
   const editProduct = async (shopId, productId, updatedProductData) => {
@@ -238,6 +245,21 @@ export function AppProvider({ children }) {
     await updateDoc(doc(db, 'orders', orderId), updates);
   };
 
+  const rateOrder = async (orderId, shopId, userRating) => {
+    // 1. Mark order as rated
+    await updateDoc(doc(db, 'orders', orderId), { status: 'rated', rating: userRating });
+    
+    // 2. Update shop rating average
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const currentReviews = shop.reviews || 0;
+    const currentTotalScore = (shop.rating || 0) * currentReviews;
+    const newReviews = currentReviews + 1;
+    const newRating = ((currentTotalScore + userRating) / newReviews).toFixed(1);
+    
+    await updateDoc(doc(db, 'shops', shopId), { rating: parseFloat(newRating), reviews: newReviews });
+  };
+
   const addCivicIssue = (title) => {
     setCivicIssues([{ id: Date.now().toString(), title, status: 'Reported', upvotes: 0 }, ...civicIssues]);
   };
@@ -258,7 +280,7 @@ export function AppProvider({ children }) {
       currentUser, setCurrentUser, login, logout,
       shops, favorites, toggleFavorite, selectedShop, setSelectedShop,
       addShop, editShop, addProduct, editProduct, deleteProduct, getOwnerShop, getOwnerShops, searchProducts,
-      loadingConfig,
+      loadingConfig, incrementShopViews, rateOrder,
       // Phase 5 exports
       posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus,
       // Phase 2, 3, 4 exports

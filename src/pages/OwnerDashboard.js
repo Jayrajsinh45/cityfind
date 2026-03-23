@@ -34,7 +34,28 @@ export default function OwnerDashboard() {
     name: '', price: '', category: 'General', available: true, imageUrl: ''
   });
   
+  const [isUploading, setIsUploading] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      const { ref: storageRef, uploadBytes, getDownloadURL } = await import('firebase/storage');
+      const { storage } = await import('../firebase');
+      
+      const fileRef = storageRef(storage, `product_images/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      setProductForm(p => ({ ...p, imageUrl: url }));
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Image upload failed.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // If no shops exist, force registration tab on startup
   useEffect(() => {
@@ -192,7 +213,7 @@ export default function OwnerDashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
                   {[
                     { icon: '📦', label: 'Items', value: shop.products?.length || 0, color: '#E3F2FD' },
-                    { icon: '👁️', label: 'Total Views', value: '247', color: '#FFF3E0' },
+                    { icon: '👁️', label: 'Total Views', value: shop.views || 0, color: '#FFF3E0' },
                     { icon: '🛵', label: 'Delivery Fee', value: shop.deliveryAvailable ? `₹${shop.deliveryFee || 20}` : 'No', color: '#E8F5E9' },
                     { icon: '⭐', label: 'Rating', value: shop.rating || 'New', color: '#F3E5F5' },
                   ].map(stat => (
@@ -388,8 +409,12 @@ export default function OwnerDashboard() {
                     value={productForm.price} onChange={e => setProductForm(p => ({ ...p, price: e.target.value }))} />
                   <input className="input-field" placeholder="Sub-category (e.g. Food, Service, Furniture)"
                     value={productForm.category} onChange={e => setProductForm(p => ({ ...p, category: e.target.value }))} />
-                  <input className="input-field" placeholder="Image URL (optional direct link to photo)"
-                    value={productForm.imageUrl} onChange={e => setProductForm(p => ({ ...p, imageUrl: e.target.value }))} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, background: '#fff', padding: 12, borderRadius: 12, border: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)' }}>Product Photo (Optional)</span>
+                    <input type="file" accept="image/*" onChange={handleImageUpload} style={{ fontSize: 12 }} />
+                    {isUploading && <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 700 }}>Uploading...</span>}
+                    {productForm.imageUrl && <img src={productForm.imageUrl} alt="preview" style={{ height: 60, width: 60, borderRadius: 8, objectFit: 'cover', marginTop: 4 }} />}
+                  </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', background: 'white', borderRadius: 12 }}>
                     <span style={{ fontSize: 14, fontWeight: 500, flex: 1 }}>Available / In Stock</span>
