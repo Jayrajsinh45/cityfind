@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
-const CATEGORIES = ['Grocery', 'Pharmacy', 'Electronics', 'Food', 'Hardware', 'Clothing', 'Other'];
+const CATEGORIES = [
+  'Grocery', 'Pharmacy', 'Electronics', 'Food', 'Hardware', 'Clothing', 
+  'Service/Repair', 'Healthcare/Hospital', 'Job Listing', 'Real Estate/PG', 'Local Event', 'Buy & Sell/Marketplace', 'Other'
+];
 
 export default function OwnerDashboard() {
   const { currentUser, getOwnerShop, addShop, addProduct, deleteProduct, logout } = useApp();

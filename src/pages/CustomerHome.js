@@ -14,8 +14,16 @@ export default function CustomerHome() {
   const { 
     currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, 
     posts, transit, addPost, likePost,
-    services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events, marketplace
+    civicIssues, addCivicIssue
   } = useApp();
+
+  const services = shops.filter(s => s.category === 'Service/Repair');
+  const healthInfo = { hospitals: shops.filter(s => s.category === 'Healthcare/Hospital') };
+  const jobs = shops.filter(s => s.category === 'Job Listing');
+  const realEstate = shops.filter(s => s.category === 'Real Estate/PG');
+  const events = shops.filter(s => s.category === 'Local Event');
+  const marketplace = shops.filter(s => s.category === 'Buy & Sell/Marketplace');
+  const retailShops = shops.filter(s => !['Service/Repair', 'Healthcare/Hospital', 'Job Listing', 'Real Estate/PG', 'Local Event', 'Buy & Sell/Marketplace'].includes(s.category));
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('home'); // home | search | favorites | profile
   const [searchResults, setSearchResults] = useState([]);
@@ -239,7 +247,7 @@ export default function CustomerHome() {
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
               Nearby Shops
             </h3>
-            {shops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
+            {retailShops.map(shop => <ShopCard key={shop.id} shop={shop} />)}
               </div>
             )}
 
@@ -275,7 +283,7 @@ export default function CustomerHome() {
                       <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>📍 {h.distance}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                      <span style={{ background: '#E8F5E9', color: '#2e7d32', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{h.beds} Beds</span>
+                      <span style={{ background: '#E8F5E9', color: '#2e7d32', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{h.products?.length || 'Available'} slots</span>
                       <button onClick={() => alert('Booking logic initiated!')} style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', padding: '4px 10px', borderRadius: 12, fontWeight: 700, fontSize: 11 }}>Book Doc</button>
                     </div>
                   </div>
@@ -319,10 +327,10 @@ export default function CustomerHome() {
                 {jobs.map(j => (
                   <div key={j.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                      <div style={{ fontWeight: 700, fontSize: 16 }}>{j.title}</div>
-                      <span style={{ background: '#E8F5E9', color: '#2e7d32', fontSize: 12, padding: '4px 8px', borderRadius: 12, fontWeight: 600 }}>{j.salary}</span>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{j.name}</div>
+                      <span style={{ background: '#E8F5E9', color: '#2e7d32', fontSize: 12, padding: '4px 8px', borderRadius: 12, fontWeight: 600 }}>{j.hours || "Negotiable"}</span>
                     </div>
-                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>🏪 {j.shop}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>🏪 {j.address}</div>
                     <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                       <button onClick={() => alert('Resume uploaded via native file picker!')} style={{ flex: 1, background: 'var(--surface2)', color: 'var(--text)', padding: '10px', borderRadius: 10, fontWeight: 600, border: '1px solid var(--border)' }}>📄 Upload Resume</button>
                       <button onClick={() => alert('Application sent!')} style={{ flex: 1, background: 'var(--primary-light)', color: 'var(--primary)', padding: '10px', borderRadius: 10, fontWeight: 600, border: 'none' }}>Apply Now</button>
@@ -340,9 +348,9 @@ export default function CustomerHome() {
                   <div key={r.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12, display: 'flex', gap: 12 }}>
                     <div style={{ width: 60, height: 60, background: '#E0F2F1', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🏠</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 16 }}>{r.title}</div>
-                      <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 4 }}>📍 {r.location}</div>
-                      <div style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>{r.rent}</div>
+                      <div style={{ fontWeight: 700, fontSize: 16 }}>{r.name}</div>
+                      <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 4 }}>📍 {r.address}</div>
+                      <div style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 14 }}>{r.hours || "Contact Owner"}</div>
                     </div>
                   </div>
                 ))}
@@ -360,9 +368,9 @@ export default function CustomerHome() {
                   <div key={m.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 60, height: 60, background: 'var(--surface2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📦</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 15 }}>{m.title}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text2)' }}>Category: {m.category}</div>
-                      <div style={{ color: '#2e7d32', fontWeight: 800, fontSize: 16, marginTop: 4 }}>{m.price}</div>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{m.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text2)' }}>Seller: {m.phone || 'Verified User'}</div>
+                      <div style={{ color: '#2e7d32', fontWeight: 800, fontSize: 16, marginTop: 4 }}>{m.hours || 'Negotiable'}</div>
                     </div>
                     <button onClick={() => alert('In-App Chat interface opened!')} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13 }}>Chat</button>
                   </div>
@@ -377,9 +385,9 @@ export default function CustomerHome() {
                 {events.map(e => (
                   <div key={e.id} style={{ background: 'linear-gradient(135deg, white, #FFF8E1)', border: '1px solid var(--border)', borderRadius: 20, padding: 20, marginBottom: 12 }}>
                     <div style={{ fontSize: 24, marginBottom: 8 }}>🎉</div>
-                    <div style={{ fontWeight: 800, fontSize: 18, fontFamily: 'var(--font-display)', marginBottom: 4 }}>{e.title}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>📅 {e.date}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2, marginBottom: 12 }}>📍 {e.location}</div>
+                    <div style={{ fontWeight: 800, fontSize: 18, fontFamily: 'var(--font-display)', marginBottom: 4 }}>{e.name}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)' }}>📅 {e.hours || "Upcoming"}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2, marginBottom: 12 }}>📍 {e.address}</div>
                     <button onClick={() => alert('Proceeding to Digital Ticketing...')} style={{ width: '100%', background: 'var(--text)', color: 'white', padding: '12px', borderRadius: 12, fontWeight: 700, border: 'none' }}>🎫 Buy Ticket</button>
                   </div>
                 ))}
