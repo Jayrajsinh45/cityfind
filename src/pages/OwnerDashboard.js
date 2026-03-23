@@ -7,7 +7,7 @@ const CATEGORIES = [
 ];
 
 export default function OwnerDashboard() {
-  const { currentUser, getOwnerShops, addShop, editShop, addProduct, editProduct, deleteProduct, logout } = useApp();
+  const { currentUser, getOwnerShops, addShop, editShop, addProduct, editProduct, deleteProduct, logout, orders } = useApp();
   
   const ownerShops = getOwnerShops();
   const [activeShopId, setActiveShopId] = useState('');
@@ -272,9 +272,81 @@ export default function OwnerDashboard() {
                   >
                     Manage Items →
                   </button>
+                  <button
+                    className="btn-outline"
+                    style={{ flex: 1 }}
+                    onClick={() => setTab('orders')}
+                  >
+                    View Orders →
+                  </button>
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Orders Tab */}
+        {tab === 'orders' && shop && (
+          <div style={{ padding: '20px 24px' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, marginBottom: 16 }}>
+              Business Orders
+            </h3>
+            {!shop.deliveryAvailable && (
+              <div style={{ background: '#FFF8E1', color: '#F59E0B', padding: '12px 16px', borderRadius: 12, marginBottom: 16, fontSize: 13, fontWeight: 700 }}>
+                ⚠️ You have opted out of the Rider Delivery Network. Customers will call you directly to purchase instead of placing app orders.
+              </div>
+            )}
+            
+            {(() => {
+              const shopOrders = (orders || []).filter(o => o.shopId === shop.id);
+              if (shopOrders.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text3)' }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>🧾</div>
+                    <p>No orders placed yet.</p>
+                  </div>
+                );
+              }
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 20 }}>
+                  {shopOrders.map(o => (
+                    <div key={o.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <span style={{ fontWeight: 700, fontSize: 14 }}>Customer: {o.customerName}</span>
+                        <span style={{ 
+                          fontSize: 10, fontWeight: 700, padding: '4px 8px', borderRadius: 12,
+                          background: (o.status === 'delivered' || o.status === 'rated') ? '#D1FAE5' : (o.status === 'pending' ? '#FEE2E2' : '#DBEAFE'),
+                          color: (o.status === 'delivered' || o.status === 'rated') ? '#10B981' : (o.status === 'pending' ? '#EF4444' : '#3B82F6')
+                        }}>
+                          {o.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 10 }}>
+                        {o.products.map(p => `${p.qty}x ${p.name}`).join(', ')}
+                      </div>
+                      
+                      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontSize: 11, color: 'var(--text3)' }}>Total Paid</span>
+                          <div style={{ fontWeight: 800, color: 'var(--primary)' }}>₹{o.total}</div>
+                        </div>
+                        {o.deliveryFee && (
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Rider Cut</span>
+                            <div style={{ fontWeight: 700, color: '#10B981', fontSize: 13 }}>-₹{o.deliveryFee}</div>
+                          </div>
+                        )}
+                      </div>
+                      {o.status === 'rated' && o.rating && (
+                         <div style={{ background: '#FFF3E0', padding: '6px 12px', borderRadius: 8, marginTop: 10, fontSize: 12, fontWeight: 700, color: '#E65100', display: 'inline-block' }}>
+                           Customer Rating: {o.rating} ⭐
+                         </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -570,6 +642,7 @@ export default function OwnerDashboard() {
         {[
           { id: 'dashboard', icon: '📊', label: 'Dashboard' },
           { id: shop ? 'products' : 'register', icon: '📦', label: 'Items' },
+          { id: 'orders', icon: '🧾', label: 'Orders' },
           { id: 'profile', icon: '👤', label: 'Profile' },
         ].map(item => (
           <button
