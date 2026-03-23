@@ -8,6 +8,7 @@ const CATEGORY_ICONS = {
 export default function ShopDetail() {
   const { selectedShop, setCurrentScreen, favorites, toggleFavorite, createOrder, incrementShopViews } = useApp();
   const [orderMessage, setOrderMessage] = useState('');
+  const [fullImagePopup, setFullImagePopup] = useState(null);
 
   useEffect(() => {
     if (selectedShop?.id) {
@@ -200,10 +201,15 @@ export default function ShopDetail() {
                   border: '1px solid var(--border)',
                   gap: 12
                 }}>
-                  {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                    {product.imageUrl ? (
+                      <img 
+                        onClick={() => setFullImagePopup(product.imageUrl)}
+                        src={product.imageUrl} 
+                        style={{ width: 80, height: 80, borderRadius: 12, objectFit: 'cover', flexShrink: 0, border: '1px solid #efefef', cursor: 'pointer' }}
+                        alt={product.name} 
+                      />
+                    ) : (
+                    <div style={{ width: 80, height: 80, borderRadius: 12, flexShrink: 0, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>
                       🏷️
                     </div>
                   )}
@@ -247,6 +253,24 @@ export default function ShopDetail() {
           ))
         )}
       </div>
+
+      {fullImagePopup && (
+        <div 
+          onClick={() => setFullImagePopup(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            background: 'rgba(0,0,0,0.85)', zIndex: 9999,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+          }}
+        >
+          <button style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'white', fontSize: 30 }}>✕</button>
+          <img 
+            src={fullImagePopup} 
+            alt="Full size" 
+            style={{ maxWidth: '90%', maxHeight: '80%', borderRadius: 16, objectFit: 'contain', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }} 
+          />
+        </div>
+      )}
     </div>
   );
 }

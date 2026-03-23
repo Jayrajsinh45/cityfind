@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const CATEGORIES = [
   'Grocery', 'Pharmacy', 'Electronics', 'Food', 'Hardware', 'Clothing', 
@@ -21,6 +23,7 @@ export default function OwnerDashboard() {
   const shop = ownerShops.find(s => s.id === activeShopId);
 
   const [tab, setTab] = useState('dashboard');
+  const [fullImagePopup, setFullImagePopup] = useState(null);
   
   // Registration / Edit Shop State
   const [shopForm, setShopForm] = useState({
@@ -42,16 +45,13 @@ export default function OwnerDashboard() {
     if (!file) return;
     try {
       setIsUploading(true);
-      const { ref: storageRef, uploadBytes, getDownloadURL } = await import('firebase/storage');
-      const { storage } = await import('../firebase');
-      
-      const fileRef = storageRef(storage, `product_images/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      const fileRef = ref(storage, `product_images/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
       await uploadBytes(fileRef, file);
       const url = await getDownloadURL(fileRef);
       setProductForm(p => ({ ...p, imageUrl: url }));
     } catch (err) {
       console.error('Upload failed:', err);
-      alert('Image upload failed.');
+      alert('Image upload failed. Try again.');
     } finally {
       setIsUploading(false);
     }
@@ -540,9 +540,14 @@ export default function OwnerDashboard() {
                   gap: 12,
                 }}>
                   {product.imageUrl ? (
-                    <img src={product.imageUrl} alt={product.name} style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} />
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.name} 
+                      onClick={() => setFullImagePopup(product.imageUrl)}
+                      style={{ width: 50, height: 50, borderRadius: 10, objectFit: 'cover', cursor: 'pointer', border: '1px solid #efefef' }} 
+                    />
                   ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                    <div style={{ width: 50, height: 50, borderRadius: 10, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
                       🏷️
                     </div>
                   )}
@@ -628,6 +633,25 @@ export default function OwnerDashboard() {
           </div>
         )}
       </div>
+
+      {/* Fullscreen Image Overlay Popup */}
+      {fullImagePopup && (
+        <div 
+          onClick={() => setFullImagePopup(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            background: 'rgba(0,0,0,0.85)', zIndex: 9999,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+          }}
+        >
+          <button style={{ position: 'absolute', top: 20, right: 20, background: 'none', border: 'none', color: 'white', fontSize: 30 }}>✕</button>
+          <img 
+            src={fullImagePopup} 
+            alt="Full size" 
+            style={{ maxWidth: '90%', maxHeight: '80%', borderRadius: 16, objectFit: 'contain', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }} 
+          />
+        </div>
+      )}
 
       {/* Bottom Nav */}
       <div style={{
