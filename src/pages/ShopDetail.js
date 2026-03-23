@@ -164,7 +164,7 @@ export default function ShopDetail() {
         )}
 
         {/* Products */}
-        {shop.deliveryFee !== undefined && shop.deliveryFee > 0 && (
+        {shop.deliveryAvailable && shop.deliveryFee > 0 && (
           <div style={{ background: '#FFF8E1', color: '#F59E0B', padding: '12px 16px', borderRadius: 12, marginBottom: 24, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>🛵</span> Rider Delivery available for ₹{shop.deliveryFee}
           </div>
@@ -214,7 +214,7 @@ export default function ShopDetail() {
                     }}>
                       {product.available ? 'In Stock' : 'Out of Stock'}
                     </span>
-                    {product.available && (
+                    {product.available && shop.deliveryAvailable && (
                       <button 
                         onClick={async () => {
                           await createOrder(shop.id, [{ name: product.name, price: product.price, qty: 1 }], product.price, shop.deliveryFee);
@@ -225,6 +225,14 @@ export default function ShopDetail() {
                       >
                         Order
                       </button>
+                    )}
+                    {product.available && !shop.deliveryAvailable && (
+                      <a 
+                        href={`tel:${shop.phone}`}
+                        style={{ background: 'var(--primary-light)', color: 'var(--primary)', textDecoration: 'none', padding: '6px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}
+                      >
+                        Call to Buy
+                      </a>
                     )}
                   </div>
                 </div>

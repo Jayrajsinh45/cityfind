@@ -24,7 +24,7 @@ export default function OwnerDashboard() {
   
   // Registration / Edit Shop State
   const [shopForm, setShopForm] = useState({
-    name: '', category: 'Grocery', address: '', phone: '', hours: '', deliveryFee: 20
+    name: '', category: 'Grocery', address: '', phone: '', hours: '', deliveryFee: 20, deliveryAvailable: false
   });
   
   // Product state
@@ -47,11 +47,16 @@ export default function OwnerDashboard() {
     if (!shopForm.name || !shopForm.address || !shopForm.phone) return;
     setSaved(true);
     
+    const finalData = { 
+      ...shopForm, 
+      deliveryFee: shopForm.deliveryAvailable ? (parseFloat(shopForm.deliveryFee) || 20) : null 
+    };
+
     if (tab === 'edit-shop' && shop) {
-      await editShop(shop.id, { ...shopForm, deliveryFee: parseFloat(shopForm.deliveryFee) || 0 });
+      await editShop(shop.id, finalData);
       setTimeout(() => { setSaved(false); setTab('dashboard'); }, 1500);
     } else {
-      await addShop({ ...shopForm, deliveryFee: parseFloat(shopForm.deliveryFee) || 20 });
+      await addShop(finalData);
       setTimeout(() => { setSaved(false); setTab('products'); }, 1500);
     }
   };
@@ -64,7 +69,8 @@ export default function OwnerDashboard() {
       address: shop.address || '',
       phone: shop.phone || '',
       hours: shop.hours || '',
-      deliveryFee: shop.deliveryFee !== undefined ? shop.deliveryFee : 20
+      deliveryFee: shop.deliveryFee !== undefined && shop.deliveryFee !== null ? shop.deliveryFee : 20,
+      deliveryAvailable: shop.deliveryAvailable !== undefined ? shop.deliveryAvailable : (shop.deliveryFee !== null && shop.deliveryFee !== undefined)
     });
     setTab('edit-shop');
   };
@@ -174,7 +180,7 @@ export default function OwnerDashboard() {
                   Add your business to CityFind and reach local customers
                 </p>
                 <button className="btn-primary" onClick={() => {
-                  setShopForm({ name: '', category: 'Grocery', address: '', phone: '', hours: '', deliveryFee: 20 });
+                  setShopForm({ name: '', category: 'Grocery', address: '', phone: '', hours: '', deliveryFee: 20, deliveryAvailable: false });
                   setTab('register');
                 }}>
                   + Register New Business
@@ -187,7 +193,7 @@ export default function OwnerDashboard() {
                   {[
                     { icon: '📦', label: 'Items', value: shop.products?.length || 0, color: '#E3F2FD' },
                     { icon: '👁️', label: 'Total Views', value: '247', color: '#FFF3E0' },
-                    { icon: '🛵', label: 'Delivery Fee', value: `₹${shop.deliveryFee || 20}`, color: '#E8F5E9' },
+                    { icon: '🛵', label: 'Delivery Fee', value: shop.deliveryAvailable ? `₹${shop.deliveryFee || 20}` : 'No', color: '#E8F5E9' },
                     { icon: '⭐', label: 'Rating', value: shop.rating || 'New', color: '#F3E5F5' },
                   ].map(stat => (
                     <div key={stat.label} style={{
@@ -223,7 +229,7 @@ export default function OwnerDashboard() {
                     { label: 'Address', value: shop.address },
                     { label: 'Phone', value: shop.phone },
                     { label: 'Hours', value: shop.hours },
-                    { label: 'Delivery Fee', value: shop.deliveryFee !== undefined ? `₹${shop.deliveryFee}` : 'Not Set' },
+                    { label: 'Rider Delivery', value: shop.deliveryAvailable ? `Available (Fee: ₹${shop.deliveryFee || 20})` : 'Not Offered' },
                   ].map(item => (
                     <div key={item.label} style={{
                       display: 'flex', justifyContent: 'space-between',
@@ -305,14 +311,34 @@ export default function OwnerDashboard() {
                   value={shopForm.hours} onChange={e => setShopForm(p => ({ ...p, hours: e.target.value }))} />
               </div>
 
-              <div>
-                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>
-                  Set Rider Delivery Fee (₹)
-                </label>
-                <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>How much will you offer the rider to deliver orders (if applicable)?</p>
-                <input className="input-field" placeholder="Default: ₹20" type="number"
-                  value={shopForm.deliveryFee} onChange={e => setShopForm(p => ({ ...p, deliveryFee: e.target.value }))} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px', background: 'white', borderRadius: 12, border: '1px solid var(--border)' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>Offer Delivery via Rider Network?</span>
+                <button
+                  onClick={() => setShopForm(p => ({ ...p, deliveryAvailable: !p.deliveryAvailable }))}
+                  style={{
+                    width: 48, height: 26, borderRadius: 13,
+                    background: shopForm.deliveryAvailable ? 'var(--primary)' : 'var(--border)',
+                    position: 'relative', transition: 'all 0.2s', border: 'none'
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', top: 3, left: shopForm.deliveryAvailable ? 24 : 3,
+                    width: 20, height: 20, borderRadius: '50%', background: 'white',
+                    transition: 'all 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
+                  }} />
+                </button>
               </div>
+
+              {shopForm.deliveryAvailable && (
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', display: 'block', marginBottom: 6 }}>
+                    Set Rider Delivery Commission (₹)
+                  </label>
+                  <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 6 }}>How much will you pay the rider for each delivery order?</p>
+                  <input className="input-field" placeholder="Default: ₹20" type="number"
+                    value={shopForm.deliveryFee || ''} onChange={e => setShopForm(p => ({ ...p, deliveryFee: e.target.value }))} />
+                </div>
+              )}
 
               <button
                 className="btn-primary"
@@ -480,7 +506,7 @@ export default function OwnerDashboard() {
 
             <button
               onClick={() => {
-                setShopForm({ name: '', category: 'Grocery', address: '', phone: '', hours: '', deliveryFee: 20 });
+                setShopForm({ name: '', category: 'Grocery', address: '', phone: '', hours: '', deliveryFee: 20, deliveryAvailable: false });
                 setTab('register');
               }}
               style={{
