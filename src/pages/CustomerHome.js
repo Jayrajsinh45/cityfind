@@ -14,7 +14,7 @@ export default function CustomerHome() {
   const { 
     currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, 
     posts, transit, addPost, likePost,
-    services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events
+    services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events, marketplace
   } = useApp();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('home'); // home | search | favorites | profile
@@ -184,6 +184,7 @@ export default function CustomerHome() {
                 { id: 'jobs', name: 'Local Jobs', icon: '💼', color: '#F3E5F5' },
                 { id: 'realestate', name: 'Real Estate', icon: '🏠', color: '#E0F2F1' },
                 { id: 'events', name: 'Events', icon: '🎉', color: '#FFF8E1' },
+                { id: 'marketplace', name: 'Buy & Sell', icon: '🤝', color: '#E8EAF6' },
               ].map(mod => (
                 <div 
                   key={mod.id} 
@@ -253,7 +254,10 @@ export default function CustomerHome() {
                       <div style={{ fontWeight: 700, fontSize: 15 }}>{s.name}</div>
                       <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>{s.category} • ⭐ {s.rating} • 📍 {s.distance}</div>
                     </div>
-                    <button style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', padding: '8px', borderRadius: 12, fontWeight: 700 }}>📞 Call</button>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <button style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', padding: '6px', borderRadius: 12, fontWeight: 700, fontSize: 12 }}>📞 Call</button>
+                      <button onClick={() => alert('Booking calendar opened!')} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px', borderRadius: 12, fontWeight: 700, fontSize: 12 }}>📅 Book</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -270,8 +274,9 @@ export default function CustomerHome() {
                       <div style={{ fontWeight: 700, fontSize: 15 }}>{h.name}</div>
                       <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>📍 {h.distance}</div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                       <span style={{ background: '#E8F5E9', color: '#2e7d32', padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>{h.beds} Beds</span>
+                      <button onClick={() => alert('Booking logic initiated!')} style={{ background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', padding: '4px 10px', borderRadius: 12, fontWeight: 700, fontSize: 11 }}>Book Doc</button>
                     </div>
                   </div>
                 ))}
@@ -318,7 +323,10 @@ export default function CustomerHome() {
                       <span style={{ background: '#E8F5E9', color: '#2e7d32', fontSize: 12, padding: '4px 8px', borderRadius: 12, fontWeight: 600 }}>{j.salary}</span>
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--text2)' }}>🏪 {j.shop}</div>
-                    <button style={{ width: '100%', marginTop: 12, background: 'var(--primary-light)', color: 'var(--primary)', padding: '10px', borderRadius: 10, fontWeight: 600, border: 'none' }}>Apply Now</button>
+                    <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                      <button onClick={() => alert('Resume uploaded via native file picker!')} style={{ flex: 1, background: 'var(--surface2)', color: 'var(--text)', padding: '10px', borderRadius: 10, fontWeight: 600, border: '1px solid var(--border)' }}>📄 Upload Resume</button>
+                      <button onClick={() => alert('Application sent!')} style={{ flex: 1, background: 'var(--primary-light)', color: 'var(--primary)', padding: '10px', borderRadius: 10, fontWeight: 600, border: 'none' }}>Apply Now</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -341,6 +349,27 @@ export default function CustomerHome() {
               </div>
             )}
 
+            {/* --- MODULE: MARKETPLACE --- */}
+            {activeModule === 'marketplace' && (
+              <div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>OLX Local (Buy & Sell)</h3>
+                <button style={{ width: '100%', marginBottom: 16, background: '#F3E5F5', color: '#7B1FA2', border: '1px dashed #CE93D8', padding: '14px', borderRadius: 16, fontWeight: 700, fontSize: 15 }}>
+                  + Sell an Item
+                </button>
+                {marketplace.map(m => (
+                  <div key={m.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 60, height: 60, background: 'var(--surface2)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>📦</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 15 }}>{m.title}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text2)' }}>Category: {m.category}</div>
+                      <div style={{ color: '#2e7d32', fontWeight: 800, fontSize: 16, marginTop: 4 }}>{m.price}</div>
+                    </div>
+                    <button onClick={() => alert('In-App Chat interface opened!')} style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: 12, fontWeight: 700, fontSize: 13 }}>Chat</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* --- MODULE: EVENTS --- */}
             {activeModule === 'events' && (
               <div>
@@ -350,7 +379,8 @@ export default function CustomerHome() {
                     <div style={{ fontSize: 24, marginBottom: 8 }}>🎉</div>
                     <div style={{ fontWeight: 800, fontSize: 18, fontFamily: 'var(--font-display)', marginBottom: 4 }}>{e.title}</div>
                     <div style={{ fontSize: 13, color: 'var(--text2)' }}>📅 {e.date}</div>
-                    <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2 }}>📍 {e.location}</div>
+                    <div style={{ fontSize: 13, color: 'var(--text2)', marginTop: 2, marginBottom: 12 }}>📍 {e.location}</div>
+                    <button onClick={() => alert('Proceeding to Digital Ticketing...')} style={{ width: '100%', background: 'var(--text)', color: 'white', padding: '12px', borderRadius: 12, fontWeight: 700, border: 'none' }}>🎫 Buy Ticket</button>
                   </div>
                 ))}
               </div>
@@ -401,6 +431,17 @@ export default function CustomerHome() {
             <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 24, marginBottom: 8 }}>
               City Pulse
             </h3>
+            
+            {/* Weather Widget */}
+            <div style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'white', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.9 }}>CURRENT WEATHER</div>
+                <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'var(--font-display)' }}>32°C</div>
+                <div style={{ fontSize: 13, opacity: 0.9 }}>Sunny • Air Quality: Good</div>
+              </div>
+              <div style={{ fontSize: 40 }}>☀️</div>
+            </div>
+
             <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 20 }}>
               Live updates from your community.
             </p>

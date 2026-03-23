@@ -40,6 +40,15 @@ export function AppProvider({ children }) {
     { id: 'e1', title: 'Sunday Open Mic', date: 'This Sunday, 7 PM', location: 'Cafe Central' }
   ]);
 
+  // Phase 5: Buy & Sell Marketplace
+  const [marketplace, setMarketplace] = useState([
+    { id: 'm1', title: 'Honda Activa 2018', category: 'Vehicles', price: '₹35,000', seller: 'Rahul K.' },
+    { id: 'm2', title: 'Study Table', category: 'Furniture', price: '₹1,200', seller: 'Priya P.' }
+  ]);
+
+  // Phase 2: Chat system (Mocked)
+  const [chats, setChats] = useState([]);
+
   useEffect(() => {
     let unsub = () => {};
     try {
@@ -240,6 +249,16 @@ export function AppProvider({ children }) {
     setCivicIssues([{ id: Date.now().toString(), title, status: 'Reported', upvotes: 0 }, ...civicIssues]);
   };
 
+  const sendMessage = (recipientId, text) => {
+    setChats(prev => [...prev, { 
+      id: Date.now().toString(), 
+      recipientId, 
+      senderId: currentUser.id, 
+      text, 
+      timestamp: new Date().toISOString() 
+    }]);
+  };
+
   return (
     <AppContext.Provider value={{
       currentScreen, setCurrentScreen,
@@ -250,7 +269,9 @@ export function AppProvider({ children }) {
       // Phase 5 exports
       posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus,
       // Phase 2, 3, 4 exports
-      services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events
+      services, healthInfo, jobs, civicIssues, addCivicIssue, realEstate, events,
+      // Missing features exports
+      marketplace, chats, sendMessage
     }}>
       {children}
     </AppContext.Provider>

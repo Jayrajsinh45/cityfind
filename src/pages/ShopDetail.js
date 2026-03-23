@@ -110,6 +110,21 @@ export default function ShopDetail() {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
+          <button
+            onClick={() => alert(`Starting secure in-app chat with ${shop.name}...`)}
+            style={{
+              flex: 1,
+              background: '#E8EAF6',
+              color: '#3F51B5',
+              border: 'none',
+              borderRadius: 14,
+              padding: '14px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              gap: 4, fontWeight: 700, fontSize: 13, cursor: 'pointer'
+            }}
+          >
+            💬 Chat
+          </button>
           <a
             href={`tel:${shop.phone}`}
             style={{
