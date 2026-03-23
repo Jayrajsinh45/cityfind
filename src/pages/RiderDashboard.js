@@ -49,8 +49,12 @@ export default function RiderDashboard() {
             </div>
           ))}
           <div style={{ borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, fontWeight: 700 }}>
-            <span>Total</span>
-            <span style={{ color: 'var(--primary)' }}>₹{order.total}</span>
+            <span>Total Value</span>
+            <span>₹{order.total}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontWeight: 800, color: '#10B981' }}>
+            <span>💰 Rider Earnings</span>
+            <span>₹{order.deliveryFee || 20}</span>
           </div>
         </div>
 
@@ -59,7 +63,7 @@ export default function RiderDashboard() {
             onClick={() => handleAccept(order.id)}
             style={{ width: '100%', background: 'var(--primary)', color: 'white', border: 'none', padding: 14, borderRadius: 14, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
           >
-            Accept Delivery
+            Accept & Earn ₹{order.deliveryFee || 20}
           </button>
         )}
 
@@ -105,7 +109,7 @@ export default function RiderDashboard() {
             </div>
             <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', padding: 16, borderRadius: 16 }}>
               <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>Earnings</div>
-              <div style={{ color: '#10B981', fontSize: 24, fontWeight: 800 }}>₹{myDeliveries.filter(m => m.status === 'delivered').length * 40}</div>
+              <div style={{ color: '#10B981', fontSize: 24, fontWeight: 800 }}>₹{myDeliveries.filter(m => m.status === 'delivered').reduce((sum, order) => sum + (parseFloat(order.deliveryFee) || 20), 0)}</div>
             </div>
           </div>
         </div>

@@ -166,6 +166,21 @@ export function AppProvider({ children }) {
     return shops.find(s => s.ownerId === currentUser?.id);
   };
 
+  const getOwnerShops = () => {
+    return shops.filter(s => s.ownerId === currentUser?.id);
+  };
+
+  const editShop = async (shopId, updatedData) => {
+    await updateDoc(doc(db, 'shops', shopId), updatedData);
+  };
+
+  const editProduct = async (shopId, productId, updatedProductData) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const updatedProducts = shop.products.map(p => p.id === productId ? { ...p, ...updatedProductData } : p);
+    await updateDoc(doc(db, 'shops', shopId), { products: updatedProducts });
+  };
+
   const searchProducts = (query) => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
@@ -199,7 +214,7 @@ export function AppProvider({ children }) {
     await updateDoc(doc(db, 'posts', postId), { likes: currentLikes + 1 });
   };
 
-  const createOrder = async (shopId, products, total) => {
+  const createOrder = async (shopId, products, total, deliveryFee = 20) => {
     const shop = shops.find(s => s.id === shopId);
     if (!shop) return;
     const newOrder = {
@@ -209,6 +224,7 @@ export function AppProvider({ children }) {
       shopName: shop.name,
       products,
       total,
+      deliveryFee,
       status: 'pending', // pending -> accepted -> picked_up -> delivered
       riderId: null,
       createdAt: new Date().toISOString()
@@ -241,7 +257,7 @@ export function AppProvider({ children }) {
       currentScreen, setCurrentScreen,
       currentUser, setCurrentUser, login, logout,
       shops, favorites, toggleFavorite, selectedShop, setSelectedShop,
-      addShop, addProduct, deleteProduct, getOwnerShop, searchProducts,
+      addShop, editShop, addProduct, editProduct, deleteProduct, getOwnerShop, getOwnerShops, searchProducts,
       loadingConfig,
       // Phase 5 exports
       posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus,

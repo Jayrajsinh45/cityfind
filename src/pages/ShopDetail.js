@@ -164,8 +164,14 @@ export default function ShopDetail() {
         )}
 
         {/* Products */}
+        {shop.deliveryFee !== undefined && shop.deliveryFee > 0 && (
+          <div style={{ background: '#FFF8E1', color: '#F59E0B', padding: '12px 16px', borderRadius: 12, marginBottom: 24, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>🛵</span> Rider Delivery available for ₹{shop.deliveryFee}
+          </div>
+        )}
+
         <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
-          Products & Services ({shop.products.length})
+          Products & Services ({shop.products?.length || 0})
         </h3>
 
         {Object.keys(grouped).length === 0 ? (
@@ -186,7 +192,15 @@ export default function ShopDetail() {
                   borderRadius: 14,
                   marginBottom: 8,
                   border: '1px solid var(--border)',
+                  gap: 12
                 }}>
+                  {product.imageUrl ? (
+                    <img src={product.imageUrl} alt={product.name} style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                      🏷️
+                    </div>
+                  )}
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 600, fontSize: 14 }}>{product.name}</p>
                     <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 15, marginTop: 2 }}>₹{product.price}</p>
@@ -203,8 +217,8 @@ export default function ShopDetail() {
                     {product.available && (
                       <button 
                         onClick={async () => {
-                          await createOrder(shop.id, [{ name: product.name, price: product.price, qty: 1 }], product.price);
-                          setOrderMessage(`Ordered 1x ${product.name}! Waiting for rider.`);
+                          await createOrder(shop.id, [{ name: product.name, price: product.price, qty: 1 }], product.price, shop.deliveryFee);
+                          setOrderMessage(`Ordered 1x ${product.name}! (Delivery: ₹${shop.deliveryFee || 20}) Waiting for rider.`);
                           setTimeout(() => setOrderMessage(''), 4000);
                         }}
                         style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
