@@ -23,7 +23,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   font-family: var(--font-body);
   background: var(--surface2);
   color: var(--text);
@@ -31,12 +32,12 @@ html, body {
 }
 
 #root {
-  height: 100%;
   max-width: 430px;
   margin: 0 auto;
   background: var(--surface);
   position: relative;
-  overflow: hidden;
+  /* Allow pages to scroll (new UI uses natural document scroll). */
+  overflow: visible;
   box-shadow: 0 0 60px rgba(0,0,0,0.15);
   min-height: 100vh;
 }
@@ -104,10 +105,10 @@ a { text-decoration: none; color: inherit; }
 .input-field::placeholder { color: var(--text3); }
 
 .screen {
-  height: 100vh;
-  overflow-y: auto;
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  /* Legacy pages: behave like normal pages (scroll works). */
+  min-height: 100vh;
+  overflow: visible;
+  position: relative;
   background: var(--surface);
 }
 

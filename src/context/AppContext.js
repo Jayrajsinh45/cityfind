@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, collection, getDocs, onSnapshot, query, addDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, onSnapshot, addDoc, updateDoc } from 'firebase/firestore';
 
 const AppContext = createContext();
 
@@ -16,12 +16,9 @@ export function AppProvider({ children }) {
   // Phase 5 State
   const [posts, setPosts] = useState([]);      // City Pulse
   const [transit, setTransit] = useState([]);  // Live Transit
-  const [orders, setOrders] = useState([]);    // Rider Network
 
   // Civic Issues (User generated reports)
-  const [civicIssues, setCivicIssues] = useState([
-    { id: 'c1', title: 'Deep Pothole on MG Road', status: 'Reported', upvotes: 14 }
-  ]);
+  const [civicIssues, setCivicIssues] = useState([]);
 
   // Phase 2: Chat system (Mocked)
   const [chats, setChats] = useState([]);
@@ -38,7 +35,6 @@ export function AppProvider({ children }) {
               const userData = { id: user.uid, email: user.email, ...docSnap.data() };
               setCurrentUser(userData);
               if (userData.role === 'owner') setCurrentScreen('ownerDashboard');
-              else if (userData.role === 'rider') setCurrentScreen('riderDashboard');
               else setCurrentScreen('customerHome');
             } else {
               const defaultUser = { id: user.uid, email: user.email, name: user.displayName, role: 'customer' };
@@ -81,24 +77,12 @@ export function AppProvider({ children }) {
       setPosts(dbPosts.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
     });
 
-    // Listen to orders (Rider Network)
-    const unsubOrders = onSnapshot(collection(db, 'orders'), (snapshot) => {
-      const dbOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setOrders(dbOrders.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
-    });
-
-    // Mock Transit Data (since real tracking needs hardware/API integrations not currently active)
-    setTransit([
-      { id: '1', type: 'bus', route: '104 - City Center to North Hub', status: 'On Time', eta: '5 mins', location: 'Main Street' },
-      { id: '2', type: 'bus', route: '201 - Station to Airport', status: 'Delayed', eta: '12 mins', location: 'Park Avenue' },
-      { id: '3', type: 'parking', route: 'Central Mall Parking', status: 'Available', spots: 45, location: 'City Center' },
-      { id: '4', type: 'rickshaw', route: 'Station Stand', status: 'Available', count: 12, location: 'Railway Station' }
-    ]);
+    // Transit data should come from a real feed/API; keep empty until integrated.
+    setTransit([]);
 
     return () => {
       unsubShops();
       unsubPosts();
-      unsubOrders();
     };
   }, [currentUser]);
 
@@ -106,7 +90,6 @@ export function AppProvider({ children }) {
     // For legacy mock support or bypass
     setCurrentUser(user);
     if (user.role === 'owner') setCurrentScreen('ownerDashboard');
-    else if (user.role === 'rider') setCurrentScreen('riderDashboard');
     else setCurrentScreen('customerHome');
   };
 
@@ -188,6 +171,30 @@ export function AppProvider({ children }) {
     await updateDoc(doc(db, 'shops', shopId), { products: updatedProducts });
   };
 
+  // --- Offers ---
+  const addOffer = async (shopId, offerData) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const newOffer = { ...offerData, id: Date.now().toString(), createdAt: new Date().toISOString(), active: true };
+    const updatedOffers = [...(shop.offers || []), newOffer];
+    await updateDoc(doc(db, 'shops', shopId), { offers: updatedOffers });
+    return newOffer;
+  };
+
+  const editOffer = async (shopId, offerId, updatedData) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const updatedOffers = (shop.offers || []).map(o => o.id === offerId ? { ...o, ...updatedData } : o);
+    await updateDoc(doc(db, 'shops', shopId), { offers: updatedOffers });
+  };
+
+  const deleteOffer = async (shopId, offerId) => {
+    const shop = shops.find(s => s.id === shopId);
+    if (!shop) return;
+    const updatedOffers = (shop.offers || []).filter(o => o.id !== offerId);
+    await updateDoc(doc(db, 'shops', shopId), { offers: updatedOffers });
+  };
+
   const searchProducts = (query) => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
@@ -221,45 +228,6 @@ export function AppProvider({ children }) {
     await updateDoc(doc(db, 'posts', postId), { likes: currentLikes + 1 });
   };
 
-  const createOrder = async (shopId, products, total, deliveryFee = 20) => {
-    const shop = shops.find(s => s.id === shopId);
-    if (!shop) return;
-    const newOrder = {
-      customerId: currentUser.id,
-      customerName: currentUser.name,
-      shopId,
-      shopName: shop.name,
-      products,
-      total,
-      deliveryFee,
-      status: 'pending', // pending -> accepted -> picked_up -> delivered
-      riderId: null,
-      createdAt: new Date().toISOString()
-    };
-    await addDoc(collection(db, 'orders'), newOrder);
-  };
-
-  const updateOrderStatus = async (orderId, status, riderId = null) => {
-    const updates = { status };
-    if (riderId) updates.riderId = riderId;
-    await updateDoc(doc(db, 'orders', orderId), updates);
-  };
-
-  const rateOrder = async (orderId, shopId, userRating) => {
-    // 1. Mark order as rated
-    await updateDoc(doc(db, 'orders', orderId), { status: 'rated', rating: userRating });
-    
-    // 2. Update shop rating average
-    const shop = shops.find(s => s.id === shopId);
-    if (!shop) return;
-    const currentReviews = shop.reviews || 0;
-    const currentTotalScore = (shop.rating || 0) * currentReviews;
-    const newReviews = currentReviews + 1;
-    const newRating = ((currentTotalScore + userRating) / newReviews).toFixed(1);
-    
-    await updateDoc(doc(db, 'shops', shopId), { rating: parseFloat(newRating), reviews: newReviews });
-  };
-
   const addCivicIssue = (title) => {
     setCivicIssues([{ id: Date.now().toString(), title, status: 'Reported', upvotes: 0 }, ...civicIssues]);
   };
@@ -279,10 +247,10 @@ export function AppProvider({ children }) {
       currentScreen, setCurrentScreen,
       currentUser, setCurrentUser, login, logout,
       shops, favorites, toggleFavorite, selectedShop, setSelectedShop,
-      addShop, editShop, addProduct, editProduct, deleteProduct, getOwnerShop, getOwnerShops, searchProducts,
-      loadingConfig, incrementShopViews, rateOrder,
+      addShop, editShop, addProduct, editProduct, deleteProduct, addOffer, editOffer, deleteOffer, getOwnerShop, getOwnerShops, searchProducts,
+      loadingConfig, incrementShopViews,
       // Phase 5 exports
-      posts, transit, orders, addPost, likePost, createOrder, updateOrderStatus,
+      posts, transit, addPost, likePost,
       // Phase 2, 3, 4 exports
       civicIssues, addCivicIssue,
       // Missing features exports

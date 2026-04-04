@@ -6,8 +6,7 @@ const CATEGORY_ICONS = {
 };
 
 export default function ShopDetail() {
-  const { selectedShop, setCurrentScreen, favorites, toggleFavorite, createOrder, incrementShopViews } = useApp();
-  const [orderMessage, setOrderMessage] = useState('');
+  const { selectedShop, setCurrentScreen, favorites, toggleFavorite, incrementShopViews } = useApp();
   const [fullImagePopup, setFullImagePopup] = useState(null);
 
   useEffect(() => {
@@ -28,72 +27,69 @@ export default function ShopDetail() {
   }, {});
 
   return (
-    <div className="screen screen-enter" style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #FF6B2C, #E85A1B)',
-        padding: '52px 24px 28px',
-        borderRadius: '0 0 32px 32px',
-        position: 'relative',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <button
-            onClick={() => setCurrentScreen('customerHome')}
-            style={{
-              width: 38, height: 38,
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: 12,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, color: 'white',
-            }}
-          >←</button>
-          <button
-            onClick={() => toggleFavorite(shop.id)}
-            style={{
-              width: 38, height: 38,
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: 12,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 20,
-            }}
-          >
-            {isFav ? '❤️' : '🤍'}
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <div style={{
-            width: 70, height: 70,
-            background: 'rgba(255,255,255,0.2)',
-            borderRadius: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 34,
-          }}>
-            {CATEGORY_ICONS[shop.category] || '🏪'}
+    <div className="cf-screen">
+      <div className="cf-top">
+        <div className="cf-top-inner">
+          <div className="cf-row" style={{ justifyContent: 'space-between' }}>
+            <button className="cf-btn cf-btn-ghost" onClick={() => setCurrentScreen('customerHome')} style={{ padding: '10px 12px' }}>
+              ← Back
+            </button>
+            <button
+              className="cf-btn cf-btn-ghost"
+              onClick={() => toggleFavorite(shop.id)}
+              style={{ padding: '10px 12px' }}
+              aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              {isFav ? '❤️' : '🤍'}
+            </button>
           </div>
-          <div>
-            <h2 style={{
-              fontFamily: 'var(--font-display)',
-              color: 'white', fontSize: 22, fontWeight: 800,
-            }}>{shop.name}</h2>
-            <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
-              <span style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white', fontSize: 11,
-                padding: '3px 10px', borderRadius: 20,
-              }}>{shop.category}</span>
-              <span style={{
-                background: 'rgba(255,255,255,0.2)',
-                color: 'white', fontSize: 11,
-                padding: '3px 10px', borderRadius: 20,
-              }}>📍 {shop.distance}</span>
+
+          <div style={{ height: 10 }} />
+
+          <div className="cf-card cf-card-pad">
+            <div className="cf-row" style={{ alignItems: 'flex-start' }}>
+              <div style={{
+                width: 52, height: 52,
+                borderRadius: 18,
+                background: 'var(--cf-surface-2)',
+                border: '1px solid var(--cf-border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 26,
+                flexShrink: 0
+              }}>
+                {CATEGORY_ICONS[shop.category] || '🏪'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 950, fontSize: 16, letterSpacing: '-0.01em' }}>{shop.name}</div>
+                <div style={{ marginTop: 6, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <span className="cf-chip" data-active="true">{shop.category}</span>
+                  <span className="cf-chip">📍 {shop.distance}</span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: 12 }} />
+
+            <div className="cf-row" style={{ gap: 10 }}>
+              <a className="cf-btn cf-btn-primary" href={`tel:${shop.phone}`} style={{ flex: 1, textAlign: 'center', padding: '12px 12px', textDecoration: 'none' }}>
+                Call
+              </a>
+              <a
+                className="cf-btn cf-btn-ghost"
+                href={`https://maps.google.com/?q=${encodeURIComponent(shop.address)}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ flex: 1, textAlign: 'center', padding: '12px 12px', textDecoration: 'none' }}
+              >
+                Directions
+              </a>
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', paddingBottom: 100 }}>
+      <div className="cf-safe" style={{ paddingTop: 10 }}>
 
         {/* Info Cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
@@ -115,68 +111,9 @@ export default function ShopDetail() {
           ))}
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 28 }}>
-          <button
-            onClick={() => alert(`Starting secure in-app chat with ${shop.name}...`)}
-            style={{
-              flex: 1,
-              background: '#E8EAF6',
-              color: '#3F51B5',
-              border: 'none',
-              borderRadius: 14,
-              padding: '14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: 4, fontWeight: 700, fontSize: 13, cursor: 'pointer'
-            }}
-          >
-            💬 Chat
-          </button>
-          <a
-            href={`tel:${shop.phone}`}
-            style={{
-              flex: 1,
-              background: 'var(--primary)',
-              color: 'white',
-              borderRadius: 14,
-              padding: '14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: 8, fontWeight: 600, fontSize: 14,
-            }}
-          >
-            📞 Call Shop
-          </a>
-          <a
-            href={`https://maps.google.com/?q=${encodeURIComponent(shop.address)}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              flex: 1,
-              background: 'var(--surface2)',
-              color: 'var(--text)',
-              borderRadius: 14,
-              padding: '14px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              gap: 8, fontWeight: 600, fontSize: 14,
-            }}
-          >
-            🗺️ Directions
-          </a>
-        </div>
-
-        {orderMessage && (
-          <div style={{ background: '#E8F5E9', color: '#2e7d32', padding: 12, borderRadius: 12, marginBottom: 20, textAlign: 'center', fontSize: 14, fontWeight: 600 }}>
-            {orderMessage}
-          </div>
-        )}
+        {/* (Action buttons moved to top card) */}
 
         {/* Products */}
-        {shop.deliveryAvailable && shop.deliveryFee > 0 && (
-          <div style={{ background: '#FFF8E1', color: '#F59E0B', padding: '12px 16px', borderRadius: 12, marginBottom: 24, fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>🛵</span> Rider Delivery available for ₹{shop.deliveryFee}
-          </div>
-        )}
-
         <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 16 }}>
           Products & Services ({shop.products?.length || 0})
         </h3>
@@ -226,19 +163,7 @@ export default function ShopDetail() {
                     }}>
                       {product.available ? 'In Stock' : 'Out of Stock'}
                     </span>
-                    {product.available && shop.deliveryAvailable && (
-                      <button 
-                        onClick={async () => {
-                          await createOrder(shop.id, [{ name: product.name, price: product.price, qty: 1 }], product.price, shop.deliveryFee);
-                          setOrderMessage(`Ordered 1x ${product.name}! (Delivery: ₹${shop.deliveryFee || 20}) Waiting for rider.`);
-                          setTimeout(() => setOrderMessage(''), 4000);
-                        }}
-                        style={{ background: 'var(--primary)', color: 'white', border: 'none', padding: '6px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Order
-                      </button>
-                    )}
-                    {product.available && !shop.deliveryAvailable && (
+                    {product.available && (
                       <a 
                         href={`tel:${shop.phone}`}
                         style={{ background: 'var(--primary-light)', color: 'var(--primary)', textDecoration: 'none', padding: '6px 14px', borderRadius: 12, fontSize: 12, fontWeight: 700 }}

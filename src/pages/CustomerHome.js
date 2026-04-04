@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { auth, googleProvider } from '../firebase';
+import { EmailAuthProvider, linkWithCredential, linkWithPopup, unlink, updatePassword } from 'firebase/auth';
 
 const CATEGORIES = [
   { name: 'Grocery', icon: '🛒', color: '#E8F5E9' },
@@ -15,7 +17,6 @@ export default function CustomerHome() {
     currentUser, shops, favorites, toggleFavorite, setSelectedShop, setCurrentScreen, logout, searchProducts, 
     posts, transit, addPost, likePost,
     civicIssues, addCivicIssue,
-    orders, rateOrder
   } = useApp();
 
   const services = shops.filter(s => s.category === 'Service/Repair');
@@ -25,7 +26,6 @@ export default function CustomerHome() {
   const events = shops.filter(s => s.category === 'Local Event');
   const marketplace = shops.filter(s => s.category === 'Buy & Sell/Marketplace');
   const retailShops = shops.filter(s => !['Service/Repair', 'Healthcare/Hospital', 'Job Listing', 'Real Estate/PG', 'Local Event', 'Buy & Sell/Marketplace'].includes(s.category));
-  const myOrders = orders ? orders.filter(o => o.customerId === currentUser?.id) : [];
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('home'); // home | search | favorites | profile
   const [searchResults, setSearchResults] = useState([]);
@@ -34,6 +34,67 @@ export default function CustomerHome() {
   const [isPosting, setIsPosting] = useState(false);
   const [activeModule, setActiveModule] = useState('shops'); // shops | services | health | civic | jobs | realestate | events
   const [newIssue, setNewIssue] = useState('');
+  const [linkError, setLinkError] = useState('');
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ password: '', confirm: '' });
+
+  const authUser = auth.currentUser;
+  const providerIds = useMemo(() => {
+    const ids = (authUser?.providerData || []).map(p => p.providerId);
+    return new Set(ids);
+  }, [authUser?.providerData]);
+  const hasGoogle = providerIds.has('google.com');
+  const hasPassword = providerIds.has('password');
+
+  const handleLinkGoogle = async () => {
+    setLinkLoading(true);
+    setLinkError('');
+    try {
+      await linkWithPopup(authUser, googleProvider);
+    } catch (e) {
+      console.error(e);
+      setLinkError(e.message);
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleUnlinkGoogle = async () => {
+    setLinkLoading(true);
+    setLinkError('');
+    try {
+      await unlink(authUser, 'google.com');
+    } catch (e) {
+      console.error(e);
+      setLinkError(e.message);
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleSetPassword = async () => {
+    const email = authUser?.email;
+    if (!email) { setLinkError('Missing email on account.'); return; }
+    if (!passwordForm.password || passwordForm.password.length < 6) { setLinkError('Password must be at least 6 characters.'); return; }
+    if (passwordForm.password !== passwordForm.confirm) { setLinkError('Passwords do not match.'); return; }
+
+    setLinkLoading(true);
+    setLinkError('');
+    try {
+      if (hasPassword) {
+        await updatePassword(authUser, passwordForm.password);
+      } else {
+        const cred = EmailAuthProvider.credential(email, passwordForm.password);
+        await linkWithCredential(authUser, cred);
+      }
+      setPasswordForm({ password: '', confirm: '' });
+    } catch (e) {
+      console.error(e);
+      setLinkError(e.message);
+    } finally {
+      setLinkLoading(false);
+    }
+  };
 
   const handleSearch = (val) => {
     setSearch(val);
@@ -133,54 +194,54 @@ export default function CustomerHome() {
   );
 
   return (
-    <div className="screen" style={{ display: 'flex', flexDirection: 'column' }}>
-      {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 80 }}>
-
-        {/* Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, #FF6B2C, #E85A1B)',
-          padding: '52px 24px 28px',
-          borderRadius: '0 0 32px 32px',
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="cf-screen">
+      <div className="cf-top">
+        <div className="cf-top-inner">
+          <div className="cf-row" style={{ justifyContent: 'space-between' }}>
             <div>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>Good morning,</p>
-              <h2 style={{ fontFamily: 'var(--font-display)', color: 'white', fontSize: 22, fontWeight: 700 }}>
-                {currentUser?.name?.split(' ')[0]} 👋
-              </h2>
+              <div className="cf-title">CityFind</div>
+              <div className="cf-subtitle">
+                Hi {currentUser?.name?.split(' ')[0] || 'there'} — find anything in your city
+              </div>
             </div>
             <div style={{
-              width: 40, height: 40,
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: 12,
+              width: 38, height: 38,
+              borderRadius: 14,
+              background: 'var(--cf-surface)',
+              border: '1px solid var(--cf-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18,
-            }}>🔔</div>
+              boxShadow: '0 10px 22px rgba(11,18,32,0.06)',
+              fontSize: 18
+            }}>
+              🔔
+            </div>
           </div>
 
-          {/* Search */}
-          <div style={{
-            background: 'white',
-            borderRadius: 16,
-            display: 'flex',
-            alignItems: 'center',
-            padding: '4px 16px',
-            gap: 10,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          }}>
-            <span style={{ fontSize: 18 }}>🔍</span>
+          <div style={{ height: 12 }} />
+
+          <div className="cf-search">
+            <span style={{ fontSize: 18 }}>🔎</span>
             <input
-              style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, padding: '12px 0', background: 'transparent', color: 'var(--text)' }}
-              placeholder="Search for anything — rice, medicine..."
+              placeholder="Search products, shops, services…"
               value={search}
               onChange={e => handleSearch(e.target.value)}
             />
             {search && (
-              <button onClick={() => { setSearch(''); setHasSearched(false); setTab('home'); }} style={{ fontSize: 18 }}>✕</button>
+              <button
+                className="cf-btn cf-btn-ghost"
+                onClick={() => { setSearch(''); setHasSearched(false); setTab('home'); }}
+                style={{ padding: 8, borderRadius: 12, borderColor: 'transparent' }}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Content */}
+      <div className="cf-safe" style={{ paddingTop: 10 }}>
 
         {tab === 'home' && (
           <div style={{ padding: '0 24px 20px' }}>
@@ -552,6 +613,12 @@ export default function CustomerHome() {
                   </div>
                 </div>
               ))}
+              {(!transit || transit.length === 0) && (
+                <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text2)' }}>
+                  <div style={{ fontSize: 44, marginBottom: 12 }}>🚌</div>
+                  Transit feed is not connected yet.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -588,52 +655,69 @@ export default function CustomerHome() {
               </div>
             </div>
 
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, marginBottom: 12 }}>My Deliveries & Orders</h3>
-            {myOrders.length === 0 ? (
-              <div style={{ color: 'var(--text3)', fontSize: 14, marginBottom: 20 }}>No items ordered yet.</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                {myOrders.map(o => (
-                  <div key={o.id} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <span style={{ fontWeight: 700, fontSize: 15 }}>{o.shopName}</span>
-                      <span style={{ 
-                        fontSize: 10, fontWeight: 700, padding: '4px 8px', borderRadius: 12,
-                        background: o.status === 'delivered' || o.status === 'rated' ? '#D1FAE5' : '#FEF3C7',
-                        color: o.status === 'delivered' || o.status === 'rated' ? '#10B981' : '#F59E0B'
-                      }}>
-                        {o.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>
-                      {o.products.map(p => `${p.qty}x ${p.name}`).join(', ')}
-                    </div>
-                    
-                    {o.status === 'delivered' && (
-                      <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12 }}>
-                        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>Rate your experience:</div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          {[1,2,3,4,5].map(star => (
-                            <button
-                              key={star}
-                              onClick={() => rateOrder(o.id, o.shopId, star)}
-                              style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer' }}
-                            >
-                              ⭐
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {o.status === 'rated' && (
-                      <div style={{ borderTop: '1px solid var(--border)', marginTop: 12, paddingTop: 12, fontSize: 12, fontWeight: 700, color: 'var(--text3)' }}>
-                        You rated this {o.rating} ⭐
-                      </div>
-                    )}
-                  </div>
-                ))}
+            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, margin: '10px 0 12px' }}>Account & Login</h3>
+            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 16, padding: 16 }}>
+              <div style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 700, marginBottom: 10 }}>SIGN-IN METHODS</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                <span style={{ background: hasGoogle ? '#E8F5E9' : '#F3F4F6', color: hasGoogle ? '#2e7d32' : '#6B7280', fontSize: 11, padding: '4px 10px', borderRadius: 999, fontWeight: 700 }}>
+                  Google {hasGoogle ? 'Connected' : 'Not connected'}
+                </span>
+                <span style={{ background: hasPassword ? '#E8F5E9' : '#F3F4F6', color: hasPassword ? '#2e7d32' : '#6B7280', fontSize: 11, padding: '4px 10px', borderRadius: 999, fontWeight: 700 }}>
+                  Password {hasPassword ? 'Set' : 'Not set'}
+                </span>
               </div>
-            )}
+
+              {linkError && <div style={{ color: '#e53e3e', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>{linkError}</div>}
+
+              {!hasGoogle ? (
+                <button
+                  onClick={handleLinkGoogle}
+                  disabled={linkLoading || !authUser}
+                  className="btn-google"
+                  style={{ width: '100%', opacity: linkLoading ? 0.7 : 1 }}
+                >
+                  Connect Google
+                </button>
+              ) : (
+                <button
+                  onClick={handleUnlinkGoogle}
+                  disabled={linkLoading || !authUser}
+                  style={{ width: '100%', padding: 14, borderRadius: 14, fontWeight: 700, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)' }}
+                >
+                  Disconnect Google
+                </button>
+              )}
+
+              <div style={{ height: 1, background: 'var(--border)', margin: '14px 0' }} />
+
+              <div style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 700, marginBottom: 10 }}>
+                {hasPassword ? 'CHANGE PASSWORD' : 'SET A PASSWORD'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input
+                  className="input-field"
+                  type="password"
+                  placeholder="New password"
+                  value={passwordForm.password}
+                  onChange={e => setPasswordForm(p => ({ ...p, password: e.target.value }))}
+                />
+                <input
+                  className="input-field"
+                  type="password"
+                  placeholder="Confirm password"
+                  value={passwordForm.confirm}
+                  onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                />
+                <button
+                  className="btn-primary"
+                  onClick={handleSetPassword}
+                  disabled={linkLoading || !authUser}
+                  style={{ opacity: linkLoading ? 0.7 : 1 }}
+                >
+                  {linkLoading ? 'Saving...' : (hasPassword ? 'Update Password' : 'Set Password')}
+                </button>
+              </div>
+            </div>
 
             <button
               onClick={logout}
@@ -650,41 +734,26 @@ export default function CustomerHome() {
       </div>
 
       {/* Bottom Nav */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 430,
-        background: 'white',
-        borderTop: '1px solid var(--border)',
-        display: 'flex',
-        padding: '8px 0 16px',
-        boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
-        zIndex: 100,
-      }}>
-        {[
-          { id: 'home', icon: '🏠', label: 'Home' },
-          { id: 'pulse', icon: '🗣️', label: 'Pulse' },
-          { id: 'transit', icon: '🚌', label: 'Transit' },
-          { id: 'favorites', icon: '❤️', label: 'Saved' },
-          { id: 'profile', icon: '👤', label: 'Profile' },
-        ].map(item => (
-          <button
-            key={item.id}
-            onClick={() => setTab(item.id)}
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 3,
-              padding: '8px 0',
-              color: tab === item.id ? 'var(--primary)' : 'var(--text3)',
-              transition: 'all 0.15s',
-            }}
-          >
-            <span style={{ fontSize: 22 }}>{item.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: tab === item.id ? 600 : 400 }}>{item.label}</span>
-          </button>
-        ))}
+      <div className="cf-bottom">
+        <div className="cf-bottom-inner">
+          {[
+            { id: 'home', icon: '🏠', label: 'Home' },
+            { id: 'pulse', icon: '🗣️', label: 'Pulse' },
+            { id: 'transit', icon: '🚌', label: 'Transit' },
+            { id: 'favorites', icon: '❤️', label: 'Saved' },
+            { id: 'profile', icon: '👤', label: 'Profile' },
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className="cf-navbtn"
+              data-active={tab === item.id ? 'true' : 'false'}
+            >
+              <span style={{ fontSize: 22, lineHeight: 1 }}>{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

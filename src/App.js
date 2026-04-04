@@ -1,11 +1,11 @@
 import React from 'react';
 import './index.css';
+import './ui/kit.css';
 import { AppProvider, useApp } from './context/AppContext';
 import SplashScreen from './pages/SplashScreen';
 import LoginScreen from './pages/LoginScreen';
 import CustomerHome from './pages/CustomerHome';
 import OwnerDashboard from './pages/OwnerDashboard';
-import RiderDashboard from './pages/RiderDashboard';
 import ShopDetail from './pages/ShopDetail';
 
 function Router() {
@@ -16,7 +16,6 @@ function Router() {
     case 'login': return <LoginScreen />;
     case 'customerHome': return <CustomerHome />;
     case 'ownerDashboard': return <OwnerDashboard />;
-    case 'riderDashboard': return <RiderDashboard />;
     case 'shopDetail': return <ShopDetail />;
     default: return <LoginScreen />;
   }

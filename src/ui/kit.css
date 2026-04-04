@@ -1,0 +1,207 @@
+:root {
+  /* Commerce-app theme (Blinkit/Amazon-inspired) */
+  --cf-bg: #f6f7fb;
+  --cf-surface: #ffffff;
+  --cf-surface-2: #f2f4f8;
+  --cf-border: rgba(18, 24, 40, 0.10);
+  --cf-text: #0b1220;
+  --cf-text-2: rgba(11, 18, 32, 0.70);
+  --cf-text-3: rgba(11, 18, 32, 0.50);
+
+  --cf-brand: #FF6B00;           /* Swiggy/CityFind orange */
+  --cf-brand-2: #E65A00;
+  --cf-brand-soft: rgba(255, 107, 0, 0.12);
+
+  --cf-warning: #f59e0b;
+  --cf-danger: #ef4444;
+
+  --cf-radius-lg: 22px;
+  --cf-radius: 16px;
+  --cf-radius-sm: 12px;
+
+  --cf-shadow: 0 10px 30px rgba(11, 18, 32, 0.08);
+  --cf-shadow-2: 0 18px 48px rgba(11, 18, 32, 0.14);
+
+  --cf-font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+}
+
+html, body {
+  background: var(--cf-bg);
+  color: var(--cf-text);
+  font-family: var(--cf-font);
+}
+
+#root {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--cf-bg);
+}
+
+.cf-screen {
+  min-height: 100vh;
+  background: var(--cf-bg);
+}
+
+.cf-safe {
+  padding: 16px;
+  padding-bottom: 92px; /* space for bottom nav */
+}
+
+.cf-top {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: linear-gradient(180deg, rgba(246,247,251,1) 0%, rgba(246,247,251,0.85) 100%);
+  backdrop-filter: blur(10px);
+}
+
+.cf-top-inner {
+  padding: 14px 16px 12px;
+}
+
+.cf-title {
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.cf-subtitle {
+  margin-top: 4px;
+  color: var(--cf-text-2);
+  font-size: 13px;
+}
+
+.cf-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cf-card {
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-radius: var(--cf-radius-lg);
+  box-shadow: var(--cf-shadow);
+}
+
+.cf-card-pad {
+  padding: 16px;
+}
+
+.cf-btn {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+  user-select: none;
+}
+.cf-btn:active { transform: scale(0.98); }
+.cf-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.cf-btn-primary {
+  background: var(--cf-brand);
+  color: white;
+}
+.cf-btn-primary:hover { background: var(--cf-brand-2); }
+
+.cf-btn-ghost {
+  background: transparent;
+  border-color: var(--cf-border);
+  color: var(--cf-text);
+}
+
+.cf-input {
+  width: 100%;
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.cf-input:focus {
+  border-color: rgba(255, 107, 0, 0.55);
+  box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.12);
+}
+.cf-input::placeholder { color: var(--cf-text-3); }
+
+.cf-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--cf-surface);
+  border: 1px solid var(--cf-border);
+  border-radius: 18px;
+  padding: 10px 12px;
+  box-shadow: 0 10px 28px rgba(11, 18, 32, 0.06);
+}
+.cf-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  font-size: 14px;
+}
+
+.cf-chips {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 0 10px;
+}
+.cf-chip {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid var(--cf-border);
+  background: var(--cf-surface);
+  font-weight: 900;
+  font-size: 12px;
+  color: var(--cf-text-2);
+}
+.cf-chip[data-active="true"] {
+  background: var(--cf-brand-soft);
+  border-color: rgba(255, 107, 0, 0.35);
+  color: var(--cf-brand-2);
+}
+
+.cf-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cf-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background: rgba(255,255,255,0.92);
+  border-top: 1px solid var(--cf-border);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+}
+.cf-bottom-inner {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 12px 18px;
+}
+.cf-navbtn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--cf-text-3);
+  font-weight: 900;
+  font-size: 10px;
+}
+.cf-navbtn[data-active="true"] { color: var(--cf-brand-2); }
